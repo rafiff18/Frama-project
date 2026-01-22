@@ -114,3 +114,12 @@ Operasional dapur:
 - Barcode menu
 - Dashboard real-time
 - Export laporan PDF
+
+
+| **Role**       | **Email**    | **Password** | **Hak Akses Utama**  |
+| -------------------- | ------------------ | ------------------ | -------------------------- |
+| **Superadmin** | `super@cafe.com` | `super123`       | Semua fitur + Kelola User. |
+| **Admin**      | `admin@cafe.com` | `admin123`       | Kelola Menu & Kategori.    |
+| **Chef**       | `chef@cafe.com`  | `chef123`        | Update Status Pesanan.     |
+| **Kasir**      | `kasir@cafe.com` | `kasir123`       | Buat Order & Checkout.     |
+| **Owner**      | `owner@cafe.com` | `owner123`       | Monitoring Laporan.        |

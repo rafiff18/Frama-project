@@ -5,6 +5,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -62,4 +64,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:kasir,admin,superadmin')->group(function () {
         Route::post('/orders/{id}/checkout', [OrderController::class, 'checkout']);
     });
+    Route::middleware('auth:sanctum')->group(function () {
+    
+    // Khusus Owner & Superadmin: Laporan
+    Route::middleware('role:owner,superadmin')->group(function () {
+        Route::get('/reports', [ReportController::class, 'index']);
+    });
+
+    // Khusus Superadmin: Kelola Staff
+    Route::middleware('role:superadmin')->group(function () {
+        Route::get('/users', [UserController::class, 'index']);
+        Route::post('/users', [UserController::class, 'store']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+    });
+});
 });
