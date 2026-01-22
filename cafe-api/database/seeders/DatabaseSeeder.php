@@ -10,41 +10,41 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Membuat Superadmin
+        // 1. Superadmin
         User::create([
-            'name' => 'Superadmin',
+            'name' => 'Super Admin',
             'email' => 'super@cafe.com',
-            'password' => Hash::make('super123'),
+            'password' => Hash::make('super123'), // Kita hash manual disini
             'role' => 'superadmin',
         ]);
 
-        // Membuat Admin
+        // 2. Admin
         User::create([
-            'name' => 'Admin User',
+            'name' => 'Admin Operasional',
             'email' => 'admin@cafe.com',
             'password' => Hash::make('admin123'),
             'role' => 'admin',
         ]);
 
-        // Membuat Chef
+        // 3. Chef
         User::create([
-            'name' => 'Chef User',
+            'name' => 'Juna Chef',
             'email' => 'chef@cafe.com',
             'password' => Hash::make('chef123'),
             'role' => 'chef',
         ]);
 
-        // Membuat Kasir
+        // 4. Kasir
         User::create([
-            'name' => 'Kasir User',
+            'name' => 'Kasir Andalan',
             'email' => 'kasir@cafe.com',
             'password' => Hash::make('kasir123'),
             'role' => 'kasir',
         ]);
 
-        // Membuat Owner
+        // 5. Owner
         User::create([
-            'name' => 'Owner User',
+            'name' => 'Pak Bos',
             'email' => 'owner@cafe.com',
             'password' => Hash::make('owner123'),
             'role' => 'owner',
