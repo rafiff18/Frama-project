@@ -1,14 +1,15 @@
-# Restaurant Management System
+
+# 💊 Dokumen Spesifikasi: ApotekEase
 
 ## 1. Deskripsi Sistem
 
-Restaurant Management System adalah aplikasi web berbasis REST API untuk membantu operasional restoran mulai dari manajemen user, menu, transaksi, dapur, hingga laporan.
+**ApotekEase** adalah aplikasi manajemen apotek berbasis REST API yang dirancang untuk mengotomatisasi operasional harian farmasi. Sistem ini mengintegrasikan manajemen inventaris obat, pelacakan stok real-time, pengadaan barang dari supplier, hingga transaksi penjualan (POS).
 
-Sistem ini menggunakan:
+**Teknologi Utama:**
 
-- Backend: Laravel (API) + MySQL (XAMPP)
-- Frontend: React + Tailwind
-- Role-based access control
+* **Backend:** Laravel 11 (REST API) & MySQL
+* **Frontend:** Single Page Application (SPA) dengan Tailwind CSS
+* **Keamanan:** Role-Based Access Control (RBAC) & Laravel Sanctum
 
 ---
 
@@ -16,50 +17,38 @@ Sistem ini menggunakan:
 
 ### 2.1 Superadmin
 
-Hak penuh terhadap sistem:
+Memiliki kendali penuh atas ekosistem digital apotek:
 
-- CRUD semua user (owner, admin, kasir, chef)
-- CRUD restoran
-- Akses seluruh data & laporan
-- Reset password user
-- Konfigurasi sistem global
+* Manajemen akun seluruh staf (Apoteker, Kasir, Owner)
+* Audit log aktivitas sistem
+* Konfigurasi global (Nama apotek, alamat, nomor izin)
+* Reset password dan manajemen database
 
 ### 2.2 Owner
 
-Monitoring & evaluasi:
+Fokus pada aspek bisnis dan pemantauan performa:
 
-- Melihat laporan penjualan
-- Melihat performa menu
-- Melihat aktivitas transaksi
-- Tidak bisa mengubah data
-- Tidak bisa kelola user
+* Melihat laporan laba rugi bulanan
+* Memantau daftar **Stok Kritis** (obat yang hampir habis)
+* Melihat daftar obat yang **Hampir Kadaluarsa** (Expired)
+* Hanya akses baca (Read-only) tanpa fitur ubah data
 
-### 2.3 Admin
+### 2.3 Apoteker (Pengganti Chef/Admin)
 
-Operasional terbatas:
+Bertanggung jawab atas validitas medis dan stok barang:
 
-- CRUD menu
-- CRUD kategori menu
-- Kelola stok bahan
-- Tidak bisa melihat laporan keuangan penuh
-- Tidak bisa mengelola user
+* CRUD Data Master Obat (Kode, Kategori, Satuan)
+* Manajemen data Supplier/Pemasok
+* Input **Penerimaan Barang** (menambah stok otomatis)
+* Verifikasi tanggal kadaluarsa obat
 
 ### 2.4 Kasir
 
-Operasional transaksi:
+Bertanggung jawab pada layanan transaksi langsung:
 
-- Membuat transaksi
-- Mengelola keranjang
-- Checkout pembayaran
-- Cetak struk
-
-### 2.5 Chef
-
-Operasional dapur:
-
-- Melihat order masuk
-- Update status pesanan (diproses / selesai)
-- Tidak bisa mengakses transaksi & laporan
+* Membuat transaksi penjualan obat ke pasien
+* Input keranjang belanja dan perhitungan total otomatis
+* Checkout pembayaran dan cetak struk
 
 ---
 
@@ -67,59 +56,35 @@ Operasional dapur:
 
 ### 3.1 Alur Login
 
-1. User login
-2. Sistem validasi
-3. Token + role dikirim
-4. Frontend redirect sesuai role
+User memasukkan kredensial, sistem memvalidasi melalui Sanctum, dan mengembalikan token serta role untuk mengatur tampilan navigasi di frontend.
 
-### 3.2 Alur Transaksi
+### 3.2 Alur Barang Masuk (Procurement)
 
-1. Kasir memilih menu
-2. Sistem membuat order
-3. Order masuk ke chef
-4. Chef memproses pesanan
-5. Status order diperbarui
-6. Transaksi selesai
+1. **Apoteker** memilih supplier dan menginput daftar obat yang datang.
+2. Sistem menambah jumlah **Stok** di tabel obat secara otomatis.
+3. Riwayat penerimaan tersimpan untuk audit stok.
 
-### 3.3 Alur Laporan
+### 3.3 Alur Penjualan (POS)
 
-1. Owner membuka dashboard
-2. Sistem mengambil data transaksi
-3. Ditampilkan dalam bentuk ringkasan & grafik
+1. **Kasir** memilih obat yang diminta pasien.
+2. Sistem mengecek ketersediaan stok; jika cukup, pesanan diproses.
+3. Setelah checkout, **Stok Berkurang** secara otomatis dan transaksi tercatat.
 
 ---
 
-## 4. Arsitektur Sistem
+## 4. Arsitektur & Target Sistem
 
-- Backend: Laravel REST API
-- Frontend: SPA (React)
-- Auth: Laravel Sanctum
-- Authorization: Middleware role
-- Komunikasi: JSON
+* **Keamanan:** Autentikasi token yang kedaluwarsa secara berkala.
+* **Integritas:** Perhitungan harga beli vs harga jual untuk laporan margin keuntungan yang akurat.
+* **Skalabilitas:** Mudah ditambah fitur integrasi BPJS atau Resep Digital di masa depan.
 
 ---
 
-## 5. Target Sistem
+## 5. Kredensial Akun Default
 
-- Aman (role-based)
-- Mudah dikembangkan
-- Cocok untuk UMKM restoran
-- Skalabel untuk multi restoran
-
----
-
-## 6. Pengembangan Selanjutnya (Opsional)
-
-- Multi cabang
-- Barcode menu
-- Dashboard real-time
-- Export laporan PDF
-
-
-| **Role**       | **Email**    | **Password** | **Hak Akses Utama**  |
-| -------------------- | ------------------ | ------------------ | -------------------------- |
-| **Superadmin** | `super@cafe.com` | `super123`       | Semua fitur + Kelola User. |
-| **Admin**      | `admin@cafe.com` | `admin123`       | Kelola Menu & Kategori.    |
-| **Chef**       | `chef@cafe.com`  | `chef123`        | Update Status Pesanan.     |
-| **Kasir**      | `kasir@cafe.com` | `kasir123`       | Buat Order & Checkout.     |
-| **Owner**      | `owner@cafe.com` | `owner123`       | Monitoring Laporan.        |
+| **Role**       | **Email**         | **Password** | **Akses Utama**  |
+| -------------------- | ----------------------- | ------------------ | ---------------------- |
+| **Superadmin** | `super@apotek.com`    | `super123`       | Kelola User & Sistem   |
+| **Apoteker**   | `apoteker@apotek.com` | `obat123`        | Kelola Stok & Supplier |
+| **Kasir**      | `kasir@apotek.com`    | `kasir123`       | Transaksi & Penjualan  |
+| **Owner**      | `owner@apotek.com`    | `owner123`       | Laporan & Monitoring   |
