@@ -2,80 +2,63 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\MenuController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PenerimaanController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\ObatController;
+use App\Http\Controllers\Api\PenjualanController;
 
 /*
 |--------------------------------------------------------------------------
 | Public Routes
 |--------------------------------------------------------------------------
 */
+
 Route::post('/login', [AuthController::class, 'login']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (Perlu Login)
+| Protected Routes
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth:sanctum')->group(function () {
 
-    // Identitas User & Logout
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Menu: Akses umum untuk semua Role yang sudah login
-    Route::get('/menus', [MenuController::class, 'index']);
-    Route::get('/menus/{id}', [MenuController::class, 'show']);
-
     /*
-    |--- Role: Admin & Superadmin (Manajemen Menu) ---
+    | Role: Apoteker, Admin, Superadmin
     */
-    Route::middleware('role:admin,superadmin')->group(function () {
-        Route::post('/menus', [MenuController::class, 'store']);
-        Route::post('/menus/{id}', [MenuController::class, 'update']); // Handling multipart/form-data
-        Route::delete('/menus/{id}', [MenuController::class, 'destroy']);
-    });
+    Route::middleware('role:apoteker,admin,superadmin')->group(function () {
+        // Penerimaan Obat
+        Route::post('/penerimaan', [PenerimaanController::class, 'store']);
+        Route::get('/penerimaan', [PenerimaanController::class, 'index']);
 
-    /*
-    |--- Role: Kasir, Admin, Superadmin (Transaksi) ---
-    */
-    Route::middleware('role:kasir,admin,superadmin')->group(function () {
-        Route::post('/orders', [OrderController::class, 'store']); // Membuat pesanan
-    });
+        // obat
+        Route::get('/obat', [ObatController::class, 'index']);
+        Route::post('/obat', [ObatController::class, 'store']);
+        Route::get('/obat/{id}', [ObatController::class, 'show']);
+        Route::put('/obat/{id}', [ObatController::class, 'update']);
+        Route::delete('/obat/{id}', [ObatController::class, 'destroy']);
 
-    /*
-    |--- Role: Chef, Admin, Superadmin (Operasional Dapur) ---
-    */
-    Route::middleware('role:chef,admin,superadmin')->group(function () {
-        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']); // Update status masak
+        // penjualan
+        Route::prefix('penjualan')->group(function () {
+    Route::get('/', [PenjualanController::class, 'index']);   // list penjualan
+    Route::post('/', [PenjualanController::class, 'store']);  // tambah penjualan
+    Route::get('/{id}', [PenjualanController::class, 'show']); // detail penjualan
+
     });
 
     /*
-    |--- Role: Owner, Admin, Superadmin (Monitoring) ---
+    | Role: Superadmin
     */
-    Route::middleware('role:owner,admin,superadmin')->group(function () {
-        Route::get('/orders', [OrderController::class, 'index']); // Melihat semua transaksi
-    });
-    Route::middleware('role:kasir,admin,superadmin')->group(function () {
-        Route::post('/orders/{id}/checkout', [OrderController::class, 'checkout']);
-    });
-    Route::middleware('auth:sanctum')->group(function () {
-    
-    // Khusus Owner & Superadmin: Laporan
-    Route::middleware('role:owner,superadmin')->group(function () {
-        Route::get('/reports', [ReportController::class, 'index']);
-    });
-
-    // Khusus Superadmin: Kelola Staff
     Route::middleware('role:superadmin')->group(function () {
         Route::get('/users', [UserController::class, 'index']);
         Route::post('/users', [UserController::class, 'store']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
     });
-});
+    });
 });

@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers; // ✅ Hapus \Auth agar sesuai standar
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User; // Tambahkan ini!
 
 class AuthController extends Controller
 {
@@ -16,30 +17,36 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        // 2. Cek Login (Otomatis cek hash password)
+        // 2. Cek Login
         if (!Auth::attempt($credentials)) {
             return response()->json([
                 'message' => 'Email atau Password salah'
             ], 401);
         }
 
-        // 3. Ambil User & Buat Token
-        $user = Auth::user();
+        /** @var \App\Models\User $user */ // 💡 Rahasia agar Intelephense tidak error
+        $user = Auth::user(); 
+        
+        // 3. Buat Token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-        // 4. Kirim Respon (Sesuai format yang diminta Vue)
+        // 4. Kirim Respon (Format standard Sanctum)
         return response()->json([
             'message' => 'Login Berhasil',
-            'access_token' => $token, // ✅ Kunci harus 'access_token'
+            'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => $user // ✅ Kirim full data user (biar role, nama, email kebawa)
+            'user' => $user // Mengirimkan info nama & role (apoteker/kasir/admin)
         ]);
     }
     
-    // Tambahan Logout (Penting nanti)
-    public function logout()
+    public function logout(Request $request)
     {
-        Auth::user()->tokens()->delete();
+        /** @var \App\Models\User $user */
+        $user = $request->user();
+        
+        // Hapus token yang sedang digunakan
+        $user->currentAccessToken()->delete();
+
         return response()->json(['message' => 'Logout berhasil']);
     }
 }

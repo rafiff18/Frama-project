@@ -11,23 +11,21 @@ return new class extends Migration
      */
 public function up(): void
 {
-    Schema::create('menus', function (Blueprint $table) {
-        $table->id();
+    Schema::create('users', function (Blueprint $table) {
+        $table->id(); // Ini akan jadi BIGINT UNSIGNED
         $table->string('name');
-        $table->text('description')->nullable();
-        $table->integer('price');
-        $table->string('image')->nullable();
-        $table->string('category'); 
-        $table->boolean('is_available')->default(true);
+        $table->string('email')->unique();
+        $table->string('password');
+        $table->string('role')->default('apoteker'); // Menentukan akses
+        $table->rememberToken();
         $table->timestamps();
     });
 }
-
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('menus');
+        Schema::dropIfExists('users');
     }
 };
