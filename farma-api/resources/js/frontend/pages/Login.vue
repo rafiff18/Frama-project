@@ -18,7 +18,7 @@ const handleLogin = async () => {
 
     try {
         // Tembak API Laravel
-        const response = await axios.post('http://127.0.0.1:8000/api/login', {
+        const response = await axios.post('/api/login', {
             email: form.email,
             password: form.password
         });
@@ -28,7 +28,7 @@ const handleLogin = async () => {
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
         // Pindah ke Dashboard
-        router.push('/'); 
+        router.push('/admin'); 
 
     } catch (error) {
         console.error(error);

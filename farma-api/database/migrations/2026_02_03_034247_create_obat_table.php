@@ -15,12 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('kode_obat')->unique();
             $table->string('nama_obat');
-            $table->string('kategori');      // Contoh: Obat Bebas, Keras, Alkes
-            $table->string('satuan');        // Contoh: Tablet, Botol, Strip
+            $table->string('kategori');
             $table->integer('stok')->default(0);
-            $table->integer('stok_minimal')->default(5);
-            $table->decimal('harga_beli', 15, 2);
-            $table->decimal('harga_jual', 15, 2);
+            $table->string('satuan')->nullable();
+            $table->integer('stok_minimal')->default(0);
+            $table->decimal('harga_beli', 12, 2);
+            $table->decimal('harga_jual', 12, 2);
             $table->date('tgl_kadaluarsa');
             $table->timestamps();
         });

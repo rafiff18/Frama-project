@@ -83,4 +83,37 @@ class ObatController extends Controller
 
         return response()->json(['message' => 'Obat berhasil dihapus']);
     }
+    // 5. Export Excel (CSV)
+    public function export()
+    {
+        $products = Obat::all();
+        $filename = "inventory_" . date('Y-m-d_H-i-s') . ".csv";
+
+        $handle = fopen('php://output', 'w');
+        ob_start();
+
+        // Header CSV
+        fputcsv($handle, ['Kode Obat', 'Nama Obat', 'Kategori', 'Stok', 'Satuan', 'Harga Beli', 'Harga Jual', 'Exp Date']);
+
+        foreach ($products as $p) {
+            fputcsv($handle, [
+                $p->kode_obat,
+                $p->nama_obat,
+                $p->kategori,
+                $p->stok,
+                $p->satuan,
+                $p->harga_beli,
+                $p->harga_jual,
+                $p->tgl_kadaluarsa
+            ]);
+        }
+
+        fclose($handle);
+        $content = ob_get_clean();
+
+        return response($content, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ]);
+    }
 }

@@ -61,8 +61,8 @@ class PenerimaanController extends Controller
                     PenerimaanDetail::create([
                         'penerimaan_id' => $penerimaan->id,
                         'obat_id'       => $item['obat_id'],
-                        'jumlah'        => $item['jumlah'],
-                        'harga_satuan'  => $item['harga_satuan']
+                        'qty'           => $item['jumlah'],
+                        'harga'         => $item['harga_satuan']
                     ]);
 
                     $obat = Obat::find($item['obat_id']);

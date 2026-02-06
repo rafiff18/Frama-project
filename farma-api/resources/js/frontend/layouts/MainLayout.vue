@@ -12,27 +12,31 @@
       <nav class="menu">
         <div class="menu-category">MENU UTAMA</div>
         
-        <router-link to="/" class="menu-item" :class="{ 'active': route.path === '/' }">
+        <router-link to="/admin" class="menu-item" :class="{ 'active': route.path === '/admin' }">
           <span class="icon">🏁</span> Dashboard
         </router-link>
 
-        <router-link to="/kasir" class="menu-item" active-class="active">
+        <router-link v-if="['superadmin', 'kasir'].includes(userRole)" to="/admin/kasir" class="menu-item" active-class="active">
           <span class="icon">🛒</span> Kasir (POS)
         </router-link>
 
-        <router-link to="/inventori" class="menu-item" active-class="active">
+        <router-link v-if="['superadmin', 'owner'].includes(userRole)" to="/admin/inventori" class="menu-item" active-class="active">
           <span class="icon">💊</span> Inventori Obat
         </router-link>
 
-        <router-link to="/resep" class="menu-item" active-class="active">
-          <span class="icon">📄</span> Resep Dokter
+        <router-link v-if="['superadmin', 'apoteker'].includes(userRole)" to="/admin/penerimaan" class="menu-item" active-class="active">
+          <span class="icon">📫</span> Penerimaan (Stok)
         </router-link>
 
-        <router-link to="/laporan" class="menu-item" active-class="active">
+        <router-link v-if="['superadmin', 'apoteker'].includes(userRole)" to="/admin/suppliers" class="menu-item" active-class="active">
+          <span class="icon">🚚</span> Supplier
+        </router-link>
+
+        <router-link v-if="['superadmin', 'owner'].includes(userRole)" to="/admin/laporan" class="menu-item" active-class="active">
           <span class="icon">📊</span> Laporan Keuangan
         </router-link>
 
-        <router-link to="/staf" class="menu-item" active-class="active">
+        <router-link v-if="['superadmin'].includes(userRole)" to="/admin/staf" class="menu-item" active-class="active">
           <span class="icon">👥</span> Kelola Staf
         </router-link>
       </nav>
@@ -43,8 +47,8 @@
           <div class="user-profile">
             <div class="avatar">👩‍⚕️</div>
             <div class="user-details">
-                <span class="name">Dr. Sarah</span>
-                <span class="role">Superadmin</span>
+                <span class="name">{{ user.name || 'User' }}</span>
+                <span class="role">{{ user.role || 'Guest' }}</span>
             </div>
           </div>
         </div>
@@ -63,7 +67,7 @@
         <div class="header-actions">
             <button class="btn-check-health">✨ Cek Kesehatan Inventori</button>
             <div class="user-info">
-                <div class="avatar-small">👩‍⚕️</div>
+                <div class="avatar-small">{{ userRole.charAt(0).toUpperCase() }}</div>
             </div>
         </div>
       </header>
@@ -83,10 +87,16 @@ import axios from 'axios';
 const route = useRoute();
 const router = useRouter();
 
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+const userRole = String(user.role || 'guest');
+
 const currentPageTitle = computed(() => {
-    if (route.path === '/') return 'Dashboard';
-    if (route.path === '/inventori') return 'Inventori Obat';
-    if (route.path === '/kasir') return 'Kasir Apotik';
+    if (route.path === '/admin') return 'Dashboard';
+    if (route.path.includes('/admin/inventori')) return 'Inventori Obat';
+    if (route.path.includes('/admin/penerimaan')) return 'Penerimaan Barang';
+    if (route.path.includes('/admin/suppliers')) return 'Master Supplier';
+    if (route.path.includes('/admin/kasir')) return 'Kasir Apotik';
+    if (route.path.includes('/admin/staf')) return 'Kelola Staf';
     return 'Halaman';
 });
 
