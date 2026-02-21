@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PenerimaanController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\ObatController;
 use App\Http\Controllers\Api\PenjualanController;
+use App\Http\Controllers\Api\DashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,6 +34,9 @@ Route::middleware('auth:sanctum')->group(function () {
     | Role: Apoteker, Admin, Superadmin
     */
     Route::middleware('role:apoteker,admin,superadmin')->group(function () {
+        // Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'index']);
+
         // Penerimaan Obat
         Route::post('/penerimaan', [PenerimaanController::class, 'store']);
         Route::get('/penerimaan', [PenerimaanController::class, 'index']);

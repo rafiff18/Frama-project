@@ -67,10 +67,29 @@ class PenerimaanController extends Controller
 
                     $obat = Obat::find($item['obat_id']);
                     if ($obat) {
+                        $hargaBeliBaru = $item['harga_satuan'];
+                        $hargaBeliLama = $obat->harga_beli;
+                        
+                        // Default updates
+                        $updateData = [
+                            'harga_beli' => $hargaBeliBaru
+                        ];
+
+                        // Opsi A: Margin Otomatis (Jika harga beli naik)
+                        // Misal: Margin default adalah 20% dari harga beli
+                        if ($hargaBeliBaru > $hargaBeliLama) {
+                            $margin = 0.20; // 20% margin
+                            $hargaJualBaru = $hargaBeliBaru + ($hargaBeliBaru * $margin);
+                            
+                            // Hanya update harga jual jika harga jual lama lebih rendah
+                            // dari harga jual baru yang diusulkan.
+                            if ($hargaJualBaru > $obat->harga_jual) {
+                                $updateData['harga_jual'] = ceil($hargaJualBaru / 500) * 500; // Pembulatan ke 500 terdekat
+                            }
+                        }
+
                         $obat->increment('stok', $item['jumlah']);
-                        $obat->update([
-                            'harga_beli' => $item['harga_satuan']
-                        ]);
+                        $obat->update($updateData);
                     }
                 }
 

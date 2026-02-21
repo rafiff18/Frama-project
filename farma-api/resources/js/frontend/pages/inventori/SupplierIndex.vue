@@ -16,6 +16,10 @@ const form = reactive({
 });
 
 const searchQuery = ref("");
+const selectedFilter = ref("Semua");
+
+// Alphabet groups for filtering
+const alphabetGroups = ["Semua", "A-E", "F-J", "K-O", "P-T", "U-Z"];
 
 // Fetch Suppliers
 const fetchSuppliers = async () => {
@@ -39,12 +43,29 @@ onMounted(() => {
 
 // Filtered List
 const filteredSuppliers = computed(() => {
-    if (!searchQuery.value) return suppliers.value;
-    const lower = searchQuery.value.toLowerCase();
-    return suppliers.value.filter(s => 
-        (s.nama_suppliers || '').toLowerCase().includes(lower) || 
-        (s.alamat || '').toLowerCase().includes(lower)
-    );
+    let result = suppliers.value;
+
+    // Apply Alphabet Filter
+    if (selectedFilter.value !== "Semua") {
+        const range = selectedFilter.value.split("-"); // ["A", "E"]
+        const start = range[0];
+        const end = range[1];
+        
+        result = result.filter(s => {
+            const firstLetter = (s.nama_suppliers || "").charAt(0).toUpperCase();
+            return firstLetter >= start && firstLetter <= end;
+        });
+    }
+
+    if (searchQuery.value) {
+        const lower = searchQuery.value.toLowerCase();
+        result = result.filter(s => 
+            (s.nama_suppliers || '').toLowerCase().includes(lower) || 
+            (s.alamat || '').toLowerCase().includes(lower)
+        );
+    }
+    
+    return result;
 });
 
 // Modal Logic
@@ -126,9 +147,22 @@ const deleteSupplier = async (id) => {
         </div>
 
         <!-- Search Bar -->
-        <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input v-model="searchQuery" type="text" placeholder="Cari nama supplier atau alamat...">
+        <div class="filter-toolbar">
+            <div class="search-bar">
+                <span class="search-icon">🔍</span>
+                <input v-model="searchQuery" type="text" placeholder="Cari nama supplier atau alamat...">
+            </div>
+            <div class="category-chips">
+                <button 
+                    v-for="grp in alphabetGroups" 
+                    :key="grp"
+                    class="chip"
+                    :class="{'active': selectedFilter === grp}"
+                    @click="selectedFilter = grp"
+                >
+                    {{ grp }}
+                </button>
+            </div>
         </div>
 
         <!-- Table -->
@@ -206,53 +240,62 @@ const deleteSupplier = async (id) => {
 <style scoped>
 .page-container { animation: fadeIn 0.3s ease; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-.page-header h3 { margin: 0; color: #0f172a; font-size: 24px; }
-.page-header p { margin: 5px 0 0; color: #64748b; font-size: 14px; }
+.page-header h3 { margin: 0; color: var(--text-main); font-size: 24px; }
+.page-header p { margin: 5px 0 0; color: var(--text-muted); font-size: 14px; }
 
-.btn-primary { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
-.btn-primary:hover { background: #059669; }
+.btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
+.btn-primary:hover { background: var(--primary-dark); }
 
-.search-bar { position: relative; margin-bottom: 20px; }
-.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.5; }
-.search-bar input { width: 100%; padding: 12px 12px 12px 40px; border: 1px solid #e2e8f0; border-radius: 10px; outline: none; transition: 0.2s; box-sizing: border-box; }
-.search-bar input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+.filter-toolbar { margin-bottom: 20px; }
+.search-bar { position: relative; margin-bottom: 12px; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); opacity: 0.5; color: var(--text-muted); }
+.search-bar input { width: 100%; padding: 12px 12px 12px 40px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 10px; outline: none; transition: 0.2s; box-sizing: border-box; }
+.search-bar input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
 
-.table-container { background: white; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+.category-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--input-bg); font-size: 13px; 
+    font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+.chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); }
+
+.table-container { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
 .data-table { width: 100%; border-collapse: collapse; }
-.data-table th { background: #f8fafc; padding: 15px; text-align: left; font-size: 13px; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
-.data-table td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
+.data-table th { background: var(--bg-hover); padding: 15px; text-align: left; font-size: 13px; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border-color); }
+.data-table td { padding: 15px; border-bottom: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); }
 .data-table tr:last-child td { border-bottom: none; }
 
 .action-buttons { display: flex; gap: 8px; }
 .btn-icon { width: 32px; height: 32px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-.btn-icon.edit { background: #e0f2fe; color: #0284c7; }
-.btn-icon.edit:hover { background: #bae6fd; }
-.btn-icon.delete { background: #fee2e2; color: #ef4444; }
-.btn-icon.delete:hover { background: #fecaca; }
+.btn-icon.edit { background: var(--info-bg); color: var(--info); }
+.btn-icon.edit:hover { opacity: 0.8; }
+.btn-icon.delete { background: var(--danger-bg); color: var(--danger); }
+.btn-icon.delete:hover { background: var(--danger-border); color: white; }
 
-.loading-state, .empty-state { padding: 40px; text-align: center; color: #94a3b8; }
+.loading-state, .empty-state { padding: 40px; text-align: center; color: var(--text-muted); }
 
 /* Modal */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); animation: fadeIn 0.2s; }
-.modal-content { background: white; width: 100%; max-width: 500px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.modal-content { background: var(--bg-card); width: 100%; max-width: 500px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
-.modal-header { padding: 20px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-.modal-header h4 { margin: 0; font-size: 18px; color: #0f172a; }
-.btn-close { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+.modal-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-hover); }
+.modal-header h4 { margin: 0; font-size: 18px; color: var(--text-main); }
+.btn-close { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; }
 
 .modal-body { padding: 25px; }
 .form-group { margin-bottom: 20px; }
-.form-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #475569; }
-.required { color: #ef4444; }
-.form-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.2s; font-size: 14px; box-sizing: border-box; }
-.form-input:focus { border-color: #10b981; }
+.form-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.required { color: var(--danger); }
+.form-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 8px; outline: none; transition: 0.2s; font-size: 14px; box-sizing: border-box; }
+.form-input:focus { border-color: var(--primary); }
 
 .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; }
-.btn-cancel { padding: 10px 20px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; }
-.btn-save { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.btn-save:hover { background: #059669; }
+.btn-cancel { padding: 10px 20px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-muted); }
+.btn-save { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-save:hover { background: var(--primary-dark); }
 
-.alert-error { background: #fef2f2; color: #ef4444; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid #fca5a5; }
+.alert-error { background: var(--danger-bg); color: var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid var(--danger-border); }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }

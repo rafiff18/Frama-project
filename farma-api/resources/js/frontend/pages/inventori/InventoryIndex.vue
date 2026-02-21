@@ -8,6 +8,7 @@ const isModalOpen = ref(false);
 const isEditing = ref(false); // boolean to track edit mode
 const errorMsg = ref("");
 const searchQuery = ref("");
+const selectedCategory = ref("Semua");
 
 // Form Data
 const form = reactive({
@@ -45,6 +46,32 @@ const fetchProducts = async () => {
         isLoading.value = false;
     }
 };
+
+// Computed property for filtering by search and selectedCategory
+const filteredProducts = computed(() => {
+    let result = products.value;
+
+    if (selectedCategory.value !== "Semua") {
+        result = result.filter(p => p.kategori === selectedCategory.value);
+    }
+    
+    // API already handles search, but we fall back client side for speed
+    if (searchQuery.value) {
+        const lower = searchQuery.value.toLowerCase();
+        result = result.filter(p => 
+            (p.nama_obat && p.nama_obat.toLowerCase().includes(lower)) || 
+            (p.kode_obat && p.kode_obat.toLowerCase().includes(lower))
+        );
+    }
+
+    return result;
+});
+
+// Categories for filter chips
+const filterCategories = computed(() => {
+    const cats = new Set(products.value.map(p => p.kategori));
+    return ["Semua", ...Array.from(cats)].filter(Boolean);
+});
 
 // Export Excel
 const exportExcel = () => {
@@ -204,8 +231,20 @@ const formatRp = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', cu
             </div>
         </div>
 
+        <div class="category-chips">
+            <button 
+                v-for="cat in filterCategories" 
+                :key="cat"
+                class="chip"
+                :class="{'active': selectedCategory === cat}"
+                @click="selectedCategory = cat"
+            >
+                {{ cat }}
+            </button>
+        </div>
+
         <div class="table-card">
-            <div v-if="isLoading" class="loading-state">Memuat data inventori...</div>
+            <div v-if="isLoading && products.length === 0" class="loading-state">Memuat data inventori...</div>
 
             <table v-else class="data-table">
                 <thead>
@@ -221,7 +260,7 @@ const formatRp = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', cu
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="item in products" :key="item.id">
+                    <tr v-for="item in filteredProducts" :key="item.id">
                         <td class="col-code">{{ item.kode_obat }}</td>
                         <td class="col-name">
                             <span class="name-text">{{ item.nama_obat }}</span>
@@ -245,7 +284,7 @@ const formatRp = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', cu
                             </div>
                         </td>
                     </tr>
-                    <tr v-if="products.length === 0 && !isLoading">
+                    <tr v-if="filteredProducts.length === 0 && !isLoading">
                         <td colspan="8" class="empty-state">Data obat tidak ditemukan.</td>
                     </tr>
                 </tbody>
@@ -341,55 +380,63 @@ const formatRp = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', cu
 }
 
 .search-wrapper {
-    background: white; border: 1px solid #e2e8f0; padding: 10px 16px; border-radius: 10px;
+    background: var(--input-bg); border: 1px solid var(--border-color); padding: 10px 16px; border-radius: 10px;
     display: flex; align-items: center; gap: 10px; width: 350px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
-.search-wrapper input { border: none; outline: none; width: 100%; font-size: 14px; color: #334155; }
+.search-wrapper input { border: none; outline: none; width: 100%; font-size: 14px; background: transparent; color: var(--text-main); }
 
 .action-buttons { display: flex; gap: 12px; }
 
 .btn-add {
-    background: #10b981; color: white; border: none; padding: 10px 20px;
+    background: var(--primary); color: white; border: none; padding: 10px 20px;
     border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;
     transition: 0.2s; font-size: 13px;
     box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
 }
-.btn-add:hover { background: #059669; transform: translateY(-2px); }
+.btn-add:hover { background: var(--primary-dark); transform: translateY(-2px); }
 
 .btn-export {
-    background: white; color: #334155; border: 1px solid #cbd5e1; padding: 10px 20px;
+    background: var(--input-bg); color: var(--text-main); border: 1px solid var(--border-color); padding: 10px 20px;
     border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px;
 }
-.btn-export:hover { background: #f8fafc; border-color: #94a3b8; }
+.btn-export:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+
+.category-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.chip {
+    padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--input-bg); font-size: 13px; 
+    font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); transform: translateY(-1px); }
+.chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); }
 
 /* --- TABEL --- */
 .table-card {
-    background: white; border-radius: 16px; border: 1px solid #f1f5f9; overflow: hidden;
+    background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
 }
 
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th {
-    background: #f8fafc; text-align: left; padding: 16px; font-size: 12px;
-    font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;
-    border-bottom: 1px solid #e2e8f0;
+    background: var(--bg-hover); text-align: left; padding: 16px; font-size: 12px;
+    font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
 }
 .data-table td {
-    padding: 16px; font-size: 14px; color: #334155; border-bottom: 1px solid #f1f5f9;
+    padding: 16px; font-size: 14px; color: var(--text-main); border-bottom: 1px solid var(--border-color);
 }
-.data-table tr:hover { background: #fcfcfc; }
+.data-table tr:hover { background: var(--bg-hover); }
 
 /* Kolom Spesifik */
-.col-code { font-family: 'Courier New', monospace; font-weight: 700; color: #475569; }
-.col-name { font-weight: 600; color: #0f172a; }
-.col-price { font-weight: 600; color: #0f172a; }
+.col-code { font-family: 'Courier New', monospace; font-weight: 700; color: var(--text-muted); }
+.col-name { font-weight: 600; color: var(--text-main); }
+.col-price { font-weight: 600; color: var(--text-main); }
 .col-stock { font-weight: 700; }
-.expire-date { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+.expire-date { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
 /* Badges */
 .category-pill {
-    background: #eff6ff; color: #3b82f6; font-size: 11px; padding: 4px 10px;
+    background: var(--info-bg); color: var(--info); font-size: 11px; padding: 4px 10px;
     border-radius: 20px; font-weight: 600;
 }
 
@@ -397,46 +444,46 @@ const formatRp = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', cu
     font-size: 11px; padding: 4px 10px; border-radius: 6px; font-weight: 700;
     display: inline-block; min-width: 60px; text-align: center;
 }
-.status-green { background: #ecfdf5; color: #10b981; }
-.status-orange { background: #fff7ed; color: #f97316; }
-.status-red { background: #fef2f2; color: #ef4444; }
+.status-green { background: var(--success-bg); color: var(--success); }
+.status-orange { background: var(--warning-bg); color: var(--warning); }
+.status-red { background: var(--danger-bg); color: var(--danger); }
 
 /* Actions */
 .action-group { display: flex; gap: 8px; }
 .btn-icon {
-    width: 32px; height: 32px; border-radius: 6px; border: 1px solid #e2e8f0;
-    background: white; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: 0.2s;
+    width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--border-color);
+    background: var(--bg-card); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: 0.2s; color: var(--text-muted); padding: 0;
 }
-.btn-icon:hover { background: #f1f5f9; }
-.btn-icon.delete:hover { background: #fef2f2; border-color: #fecaca; }
+.btn-icon:hover { background: var(--bg-hover); color: var(--primary); }
+.btn-icon.delete:hover { background: var(--danger-bg); border-color: var(--danger-border); color: var(--danger); }
 
-.empty-state, .loading-state { padding: 40px; text-align: center; color: #94a3b8; }
+.empty-state, .loading-state { padding: 40px; text-align: center; color: var(--text-muted); }
 
 /* Modal */
 .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); animation: fadeIn 0.2s; }
-.modal-content { background: white; width: 100%; max-width: 600px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.modal-content { background: var(--bg-card); width: 100%; max-width: 600px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); overflow: hidden; animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
 
-.modal-header { padding: 20px 25px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
-.modal-header h4 { margin: 0; font-size: 18px; color: #0f172a; }
-.btn-close { background: none; border: none; font-size: 24px; color: #94a3b8; cursor: pointer; }
+.modal-header { padding: 20px 25px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: var(--bg-hover); }
+.modal-header h4 { margin: 0; font-size: 18px; color: var(--text-main); }
+.btn-close { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; }
 
 .modal-body { padding: 25px; max-height: 80vh; overflow-y: auto; }
 .form-group { margin-bottom: 15px; }
-.form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #475569; }
-.required { color: #ef4444; }
-.form-input { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; transition: 0.2s; font-size: 14px; box-sizing: border-box; }
-.form-input:focus { border-color: #10b981; }
+.form-group label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.required { color: var(--danger); }
+.form-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 8px; outline: none; transition: 0.2s; font-size: 14px; box-sizing: border-box; }
+.form-input:focus { border-color: var(--primary); }
 
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
 
 .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px; }
-.btn-cancel { padding: 10px 20px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; cursor: pointer; font-weight: 600; color: #64748b; }
-.btn-save { padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.btn-save:hover { background: #059669; }
+.btn-cancel { padding: 10px 20px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--text-muted); }
+.btn-save { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-save:hover { background: var(--primary-dark); }
 
-.alert-error { background: #fef2f2; color: #ef4444; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid #fca5a5; }
+.alert-error { background: var(--danger-bg); color: var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; border: 1px solid var(--danger-border); }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
