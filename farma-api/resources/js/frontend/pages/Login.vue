@@ -2,6 +2,7 @@
 import { reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import logoImg from '../../../images/logo.png';
 
 const router = useRouter();
 const errorMessage = ref(''); 
@@ -27,8 +28,13 @@ const handleLogin = async () => {
         localStorage.setItem('token', response.data.access_token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        // Pindah ke Dashboard
-        router.push('/admin'); 
+        // Pindah ke Dashboard atau Kasir
+        const userRole = response.data.user.role;
+        if (userRole === 'kasir') {
+            router.push('/admin/kasir');
+        } else {
+            router.push('/admin'); 
+        } 
 
     } catch (error) {
         console.error(error);
@@ -47,14 +53,14 @@ const handleLogin = async () => {
     <div class="login-wrapper">
         
         <div class="brand-header">
-            <div class="logo-icon">💊</div>
-            <h1>MediCare AI</h1>
+            <img :src="logoImg" alt="RR Farma Logo" class="logo-image" />
+            <h1>RR FARMA</h1>
         </div>
 
         <div class="login-card">
             <div class="card-header">
                 <h3>Selamat Datang Kembali 👋</h3>
-                <p>Masuk untuk mengelola apotik & inventori obat.</p>
+                <p>Masuk untuk mengelola apotek & alat kesehatan.</p>
             </div>
 
             <div v-if="errorMessage" class="alert-error">
@@ -98,7 +104,7 @@ const handleLogin = async () => {
             </form>
 
             <div class="login-footer">
-                <small>Sistem Manajemen Apotik v1.0</small>
+                <small>Sistem Manajemen Apotek v1.0</small>
             </div>
         </div>
     </div>
@@ -112,13 +118,11 @@ const handleLogin = async () => {
 }
 
 /* BRAND LOGO */
-.brand-header { display: flex; align-items: center; gap: 10px; margin-bottom: 25px; }
-.logo-icon { 
-    background: var(--primary); color: white; width: 45px; height: 45px; 
-    border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;
-    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+.brand-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+.logo-image { 
+    width: 60px; height: 60px; object-fit: contain;
 }
-.brand-header h1 { font-size: 24px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.5px; }
+.brand-header h1 { font-size: 32px; font-weight: 800; color: var(--text-main); margin: 0; letter-spacing: -0.5px; }
 
 /* CARD STYLE */
 .login-card {

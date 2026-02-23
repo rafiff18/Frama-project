@@ -196,7 +196,7 @@ const fetchDashboardData = async () => {
         isLoading.value = true;
         
         // Asumsi base URL untuk API diseting di interceptor atau menggunakan VITE_API_BASE_URL
-        const response = await axios.get('http://localhost:8000/api/dashboard', {
+        const response = await axios.get('/api/dashboard', {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem('token')}`
             }

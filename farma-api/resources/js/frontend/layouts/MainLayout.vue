@@ -2,17 +2,17 @@
   <div class="layout-wrapper">
     <aside class="sidebar">
       <div class="sidebar-header">
-        <div class="logo-icon">💊</div>
+        <img :src="logoImg" alt="RR Farma Logo" class="logo-image" />
         <div class="brand-text">
-            <span class="brand-title">MediCare AI</span>
-            <small class="brand-subtitle">Apotik Management</small>
+            <span class="brand-title">RR FARMA</span>
+            <small class="brand-subtitle">Apotek & Alat Kesehatan</small>
         </div>
       </div>
 
       <nav class="menu">
         <div class="menu-category">MENU UTAMA</div>
         
-        <router-link to="/admin" class="menu-item" :class="{ 'active': route.path === '/admin' }">
+        <router-link v-if="['superadmin', 'owner', 'apoteker'].includes(userRole)" to="/admin" class="menu-item" :class="{ 'active': route.path === '/admin' }">
           <span class="icon">🏁</span> Dashboard
         </router-link>
 
@@ -61,7 +61,7 @@
     <main class="main-content">
       <header class="top-navbar">
         <div class="breadcrumb">
-          <span class="sub-title">APOTIK MANAGEMENT SYSTEM</span>
+          <span class="sub-title">SISTEM MANAJEMEN APOTEK</span>
           <h2 class="page-title">{{ currentPageTitle }}</h2>
         </div>
         <div class="header-actions">
@@ -86,6 +86,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
+import logoImg from '../../../images/logo.png';
 
 const isDarkMode = ref(false);
 
@@ -100,7 +101,7 @@ const currentPageTitle = computed(() => {
     if (route.path.includes('/admin/inventori')) return 'Inventori Obat';
     if (route.path.includes('/admin/penerimaan')) return 'Penerimaan Barang';
     if (route.path.includes('/admin/suppliers')) return 'Master Supplier';
-    if (route.path.includes('/admin/kasir')) return 'Kasir Apotik';
+    if (route.path.includes('/admin/kasir')) return 'Kasir Apotek';
     if (route.path.includes('/admin/staf')) return 'Kelola Staf';
     return 'Halaman';
 });
@@ -128,7 +129,7 @@ const toggleTheme = () => {
 
 const logout = async () => {
     try {
-        await axios.post('http://127.0.0.1:8000/api/logout', {}, {
+        await axios.post('/api/logout', {}, {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
         });
         localStorage.removeItem('token');
@@ -164,10 +165,8 @@ const logout = async () => {
   padding: 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color);
 }
 
-.logo-icon {
-  background: var(--primary); color: white; width: 40px; height: 40px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 10px; font-size: 22px;
+.logo-image {
+  width: 40px; height: 40px; object-fit: contain;
 }
 
 .brand-text { display: flex; flex-direction: column; }

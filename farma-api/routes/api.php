@@ -31,7 +31,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     /*
-    | Role: Apoteker, Admin, Superadmin
+    | Role: All Authenticated Staff (Apoteker, Admin, Superadmin, Owner, Kasir)
+    */
+    Route::middleware('role:apoteker,admin,superadmin,owner,kasir')->group(function () {
+        Route::get('/obat', [ObatController::class, 'index']);
+        Route::get('/obat/{id}', [ObatController::class, 'show']);
+        Route::post('/penjualan', [PenjualanController::class, 'store']);
+    });
+
+    /*
+    | Full Management Route Group (Apoteker, Admin, Superadmin)
+    | excluding Kasir
     */
     Route::middleware('role:apoteker,admin,superadmin')->group(function () {
         // Dashboard
@@ -44,20 +54,17 @@ Route::middleware('auth:sanctum')->group(function () {
         // Suppliers
         Route::apiResource('suppliers', App\Http\Controllers\Api\SupplierController::class);
 
-        // obat
+        // obat (Management only)
         Route::get('/obat/export', [ObatController::class, 'export']); // Export route
-        Route::get('/obat', [ObatController::class, 'index']);
         Route::post('/obat', [ObatController::class, 'store']);
-        Route::get('/obat/{id}', [ObatController::class, 'show']);
         Route::put('/obat/{id}', [ObatController::class, 'update']);
         Route::delete('/obat/{id}', [ObatController::class, 'destroy']);
 
-    // penjualan
-    Route::prefix('penjualan')->group(function () {
-        Route::get('/', [PenjualanController::class, 'index']);   // list penjualan
-        Route::post('/', [PenjualanController::class, 'store']);  // tambah penjualan
-        Route::get('/{id}', [PenjualanController::class, 'show']); // detail penjualan
-    });
+        // penjualan (Management/viewing only)
+        Route::prefix('penjualan')->group(function () {
+            Route::get('/', [PenjualanController::class, 'index']);   // list penjualan
+            Route::get('/{id}', [PenjualanController::class, 'show']); // detail penjualan
+        });
 
     // Laporan Keuangan
     Route::get('/laporan', [App\Http\Controllers\Api\LaporanController::class, 'index']);

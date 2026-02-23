@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router';
+import logoImg from '../../../images/logo.png';
 
 const router = useRouter();
 
@@ -10,11 +11,10 @@ const navigateToLogin = () => {
 
 <template>
     <div class="landing-container">
-        
         <nav class="navbar">
             <div class="logo-container">
-                <div class="logo-icon">💊</div>
-                <span class="brand-name">MediCare AI</span>
+                <img :src="logoImg" alt="RR Farma Logo" class="logo-image" />
+                <span class="brand-name">RR FARMA</span>
             </div>
             <div class="nav-links">
                 <a href="#fitur">Fitur</a>
@@ -26,80 +26,58 @@ const navigateToLogin = () => {
 
         <header class="hero-section">
             <div class="hero-content">
-                <span class="badge-new">✨ Solusi Apotik Digital 2026</span>
-                <h1>Kelola Apotik Jadi <br><span class="highlight">Lebih Mudah & Cerdas</span></h1>
+                <span class="badge-new">✨ Melayani Dengan Sepenuh Hati</span>
+                <h1>Apotek & Pemasok <br><span class="highlight">Alat Kesehatan Terpercaya</span></h1>
                 <p>
-                    Sistem manajemen apotik terintegrasi dengan fitur Kasir (POS), 
-                    Inventori Otomatis, dan Laporan Keuangan Real-time. 
-                    Tinggalkan cara lama, beralih ke digital.
+                    RR Farma hadir untuk memenuhi kebutuhan obat-obatan, vitamin, dan perlengkapan medis terlengkap dengan kualitas terjamin. Konsultasi apoteker profesional tersedia.
                 </p>
                 <div class="hero-buttons">
-                    <button @click="navigateToLogin" class="btn-primary">Mulai Sekarang 🚀</button>
-                    <button class="btn-secondary">Lihat Demo</button>
+                    <button class="btn-primary">Hubungi Kami 📞</button>
+                    <button class="btn-secondary">Lokasi Apotek</button>
                 </div>
                 
                 <div class="stats-row">
                     <div class="stat">
-                        <b>500+</b> <span>Apotik Bergabung</span>
+                        <b>100%</b> <span>Obat Asli & Resmi</span>
                     </div>
                     <div class="divider"></div>
                     <div class="stat">
-                        <b>1Juta+</b> <span>Transaksi/Bulan</span>
+                        <b>24/7</b> <span>Layanan Informasi</span>
                     </div>
                 </div>
             </div>
 
             <div class="hero-image">
-                <div class="mockup-window">
-                    <div class="window-header">
-                        <div class="dots">
-                            <span class="dot red"></span>
-                            <span class="dot yellow"></span>
-                            <span class="dot green"></span>
-                        </div>
-                    </div>
-                    <div class="window-body">
-                        <div class="skeleton-header"></div>
-                        <div class="skeleton-grid">
-                            <div class="box"></div>
-                            <div class="box"></div>
-                            <div class="box"></div>
-                        </div>
-                        <div class="skeleton-chart"></div>
-                    </div>
-                    <div class="floating-badge">
-                        ✅ Stok Aman
-                    </div>
-                </div>
+                <img :src="logoImg" alt="RR Farma Logo" style="width: 100%; max-width: 400px; animation: float 3s ease-in-out infinite;" />
             </div>
         </header>
 
         <section id="fitur" class="features-section">
             <div class="section-title">
-                <h2>Fitur Unggulan</h2>
-                <p>Semua yang Anda butuhkan untuk operasional apotik yang efisien.</p>
+                <h2>Layanan Kami</h2>
+                <p>Kami berkomitmen menyediakan layanan kesehatan terbaik untuk Anda dan keluarga.</p>
             </div>
 
             <div class="feature-grid">
                 <div class="feature-card">
-                    <div class="icon-bg green">🛒</div>
-                    <h3>Kasir Pintar (POS)</h3>
-                    <p>Proses transaksi cepat dengan barcode scanner dan struk otomatis.</p>
+                    <div class="icon-bg green">💊</div>
+                    <h3>Tebus Resep Dokter</h3>
+                    <p>Layanan penebusan resep dengan obat lengkap, original, dan ditangani apoteker handal.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="icon-bg blue">💊</div>
-                    <h3>Inventori Obat</h3>
-                    <p>Pantau stok obat, tanggal kadaluarsa, dan notifikasi stok menipis.</p>
+                    <div class="icon-bg blue">🩺</div>
+                    <h3>Alat Kesehatan</h3>
+                    <p>Tersedia berbagai alat medis untuk kebutuhan perorangan, klinik, hingga rumah sakit.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="icon-bg orange">📊</div>
-                    <h3>Laporan Keuangan</h3>
-                    <p>Analisa keuntungan, omzet harian, dan arus kas secara real-time.</p>
+                    <div class="icon-bg orange">💬</div>
+                    <h3>Konsultasi Apoteker</h3>
+                    <p>Dapatkan informasi akurat seputar penggunaan obat-obatan dari tenaga profesional kami.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="icon-bg purple">📄</div>
-                    <h3>Resep Digital</h3>
-                    <p>Kelola penebusan resep dokter dan riwayat pasien dengan rapi.</p>
+                    <div class="icon-bg purple">🚚</div>
+                    <h3>Layanan Pesan Antar</h3>
+                    <p>Pesan obat dan alat kesehatan dari rumah, kami siap antar sampai tujuan dengan aman.</p>
                 </div>
             </div>
         </section>
@@ -107,11 +85,11 @@ const navigateToLogin = () => {
         <footer class="footer">
             <div class="footer-content">
                 <div class="brand">
-                    <h3>MediCare AI</h3>
-                    <p>Software Apotik No. #1 di Indonesia.</p>
+                    <h3>RR FARMA</h3>
+                    <p>Apotek & Alat Kesehatan.</p>
                 </div>
                 <div class="copyright">
-                    &copy; 2026 MediCare AI. All rights reserved.
+                    &copy; 2026 RR FARMA. All rights reserved.
                 </div>
             </div>
         </footer>
@@ -136,8 +114,8 @@ const navigateToLogin = () => {
 }
 
 .logo-container { display: flex; align-items: center; gap: 10px; }
-.logo-icon { font-size: 24px; }
-.brand-name { font-weight: 800; font-size: 18px; color: var(--primary); letter-spacing: -0.5px; }
+.logo-image { height: 48px; object-fit: contain; }
+.brand-name { font-weight: 800; font-size: 22px; color: var(--primary); letter-spacing: -0.5px; }
 
 .nav-links { display: flex; gap: 30px; }
 .nav-links a { text-decoration: none; color: var(--text-muted); font-weight: 500; font-size: 14px; transition: 0.3s; }
@@ -185,33 +163,7 @@ p { font-size: 16px; line-height: 1.6; color: var(--text-muted); margin-bottom: 
 .stat span { font-size: 12px; color: var(--text-muted); }
 .divider { width: 1px; height: 30px; background: var(--border-color); }
 
-/* --- HERO IMAGE (MOCKUP) --- */
-.hero-image { flex: 1; display: flex; justify-content: center; position: relative; }
-.mockup-window {
-    width: 100%; max-width: 500px; height: 320px; background: var(--bg-card);
-    border-radius: 16px; box-shadow: 0 20px 50px -10px rgba(0,0,0,0.1);
-    border: 1px solid var(--border-color); overflow: hidden; position: relative;
-    transform: perspective(1000px) rotateY(-5deg) rotateX(5deg);
-    transition: 0.5s;
-}
-.mockup-window:hover { transform: perspective(1000px) rotateY(0) rotateX(0); }
 
-.window-header { padding: 12px; background: var(--bg-hover); border-bottom: 1px solid var(--border-color); }
-.dots { display: flex; gap: 6px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; }
-.red { background: var(--danger); } .yellow { background: var(--warning); } .green { background: var(--success); }
-
-.window-body { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-.skeleton-header { height: 40px; width: 60%; background: var(--bg-body); border-radius: 8px; }
-.skeleton-grid { display: flex; gap: 10px; }
-.box { height: 80px; flex: 1; background: var(--bg-hover); border-radius: 8px; }
-.skeleton-chart { height: 100px; width: 100%; background: var(--bg-body); border-radius: 8px; margin-top: auto; }
-
-.floating-badge {
-    position: absolute; bottom: 40px; right: -20px; background: var(--bg-card);
-    padding: 10px 20px; border-radius: 12px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    font-weight: 700; color: var(--primary); border: 1px solid var(--success-bg); animation: float 3s ease-in-out infinite;
-}
 
 /* --- FEATURES --- */
 .features-section { padding: 80px 5%; background: var(--bg-card); }
