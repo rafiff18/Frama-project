@@ -1,64 +1,104 @@
 @import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700;800&display=swap');
 
 @source '../**/*.vue';
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-outfit: 'Outfit', sans-serif;
 }
 
 :root {
-    --bg-body: #f1f5f9;
+    /* Soft Off-White Background */
+    --bg-body: #f8fafc;
     --bg-card: #ffffff;
+    --bg-hover: #f1f5f9;
+    
+    /* Text Colors */
     --text-main: #0f172a;
     --text-muted: #64748b;
     --border-color: #e2e8f0;
-    --bg-hover: #f8fafc;
-    /* Brand Colors */
-    --primary: #10b981;
-    --primary-dark: #059669;
-    --sidebar-bg: #0f172a;
-    --sidebar-text: #94a3b8;
-    --sidebar-hover: #1e293b;
+    
+    /* RR Farma Brand Identity (Based on the logo) */
+    --primary: #15803d; /* Forest Green for Text/Dark Cross */
+    --primary-light: #84cc16; /* Lime Green for Light Cross */
+    --primary-dark: #166534;
+    
+    /* UI States */
+    --success: #10b981;
+    --success-bg: #ecfdf5;
     --danger: #ef4444;
     --danger-bg: #fef2f2;
     --danger-border: #fca5a5;
     --warning: #f59e0b;
     --warning-bg: #fffbeb;
-    --success: #10b981;
-    --success-bg: #ecfdf5;
     --info: #3b82f6;
     --info-bg: #eff6ff;
+    
+    /* Inputs */
     --input-bg: #ffffff;
+    
+    /* Sidebar / Dashboard Specific */
+    --sidebar-bg: #ffffff;
+    --sidebar-text: #64748b;
+    --sidebar-hover: #15803d;
+    --sidebar-active-text: #ffffff;
 }
 
 body.dark {
-    --bg-body: #0b1121; /* Darker than sidebar */
+    --bg-body: #0b1120; 
     --bg-card: #1e293b; 
+    --bg-hover: #334155;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --border-color: #334155;
-    --bg-hover: #334155;
-    /* Brand Colors (Adjusted for dark mode if needed) */
-    --primary: #10b981;
-    --primary-dark: #059669;
-    --sidebar-bg: #0f172a; /* Keep sidebar same */
+    
+    /* Adjusted Brand Colors */
+    --primary: #22c55e;
+    --primary-light: #a3e635;
+    --primary-dark: #16a34a;
+    
+    --sidebar-bg: #0f172a; 
     --sidebar-text: #94a3b8;
     --sidebar-hover: #1e293b;
-    --danger: #ef4444;
-    --danger-bg: rgba(239, 68, 68, 0.1);
-    --danger-border: #7f1d1d;
-    --warning: #f59e0b;
-    --warning-bg: rgba(245, 158, 11, 0.1);
-    --success: #10b981;
-    --success-bg: rgba(16, 185, 129, 0.1);
-    --info: #3b82f6;
-    --info-bg: rgba(59, 130, 246, 0.1);
+    --sidebar-active-text: #22c55e;
+    
     --input-bg: #0f172a;
 }
 
 body {
     background-color: var(--bg-body);
     color: var(--text-main);
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: 'Outfit', sans-serif; /* Applied modern font globally */
+    transition: background-color 0.4s ease, color 0.4s ease;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism Utilities */
+.glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.dark .glass {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Scrollbar Styling for a premium feel */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
 }
