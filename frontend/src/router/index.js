@@ -85,15 +85,16 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
-  const loggedIn = localStorage.getItem('token')
+import { supabase } from '../lib/supabase'
+
+router.beforeEach(async (to, from, next) => {
+  const { data } = await supabase.auth.getSession()
+  const loggedIn = data.session
 
   if (to.matched.some(record => record.meta.requiresAuth) && !loggedIn) {
     next('/login')
     return
   }
-
-
 
   next()
 })

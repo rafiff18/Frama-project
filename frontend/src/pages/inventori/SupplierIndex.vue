@@ -1,6 +1,6 @@
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue';
-import axios from 'axios';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
+import { supabase } from '../../lib/supabase'; // Fixed import path
 
 const suppliers = ref([]);
 const isLoading = ref(false);
@@ -25,10 +25,13 @@ const alphabetGroups = ["Semua", "A-E", "F-J", "K-O", "P-T", "U-Z"];
 const fetchSuppliers = async () => {
     isLoading.value = true;
     try {
-        const response = await axios.get('/api/suppliers', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        suppliers.value = response.data;
+        const { data, error } = await supabase
+            .from('suppliers')
+            .select('*')
+            .order('nama_suppliers', { ascending: true });
+            
+        if (error) throw error;
+        suppliers.value = data || [];
     } catch (error) {
         console.error(error);
         errorMsg.value = "Gagal memuat data supplier.";
@@ -96,22 +99,30 @@ const saveSupplier = async () => {
     isLoading.value = true;
     errorMsg.value = "";
     try {
-        const url = isEditing.value ? `/api/suppliers/${form.id}` : '/api/suppliers';
-        const method = isEditing.value ? 'put' : 'post';
-        
-        await axios[method](url, form, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const payload = {
+            nama_suppliers: form.nama_suppliers,
+            telepon: form.telepon,
+            alamat: form.alamat
+        };
+
+        if (isEditing.value) {
+            const { error } = await supabase
+                .from('suppliers')
+                .update(payload)
+                .eq('id', form.id);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase
+                .from('suppliers')
+                .insert([payload]);
+            if (error) throw error;
+        }
 
         await fetchSuppliers();
         closeModal();
     } catch (error) {
         console.error(error);
-    if (error.response && error.response.data.message) {
-            errorMsg.value = error.response.data.message;
-        } else {
-            errorMsg.value = "Gagal menyimpan data.";
-        }
+        errorMsg.value = error.message || "Gagal menyimpan data.";
     } finally {
         isLoading.value = false;
     }
@@ -122,13 +133,16 @@ const deleteSupplier = async (id) => {
 
     isLoading.value = true;
     try {
-        await axios.delete(`/api/suppliers/${id}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const { error } = await supabase
+            .from('suppliers')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+        
         await fetchSuppliers();
     } catch (error) {
         console.error(error);
-        alert("Gagal menghapus supplier.");
+        alert(error.message || "Gagal menghapus supplier.");
     } finally {
         isLoading.value = false;
     }

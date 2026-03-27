@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
-import axios from 'axios';
+import { supabase } from '../../lib/supabase'; // Fixed import
 
 // --- STATE ---
 const isLoading = ref(false);
@@ -14,18 +14,101 @@ const stats = ref({
 const transactions = ref([]);
 const filterTransaction = ref('semua'); // semua, income, expense
 
+// --- HELPERS FOR DATES ---
+const getDateRange = (p) => {
+    const now = new Date();
+    let start, end;
+    
+    if (p === 'this_month') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+    } else if (p === 'last_month') {
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    } else if (p === 'this_year') {
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+    }
+    return { 
+        start: start.toISOString(), 
+        end: end.toISOString() 
+    };
+};
+
+const formatDateDay = (dateString) => {
+    const opts = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' };
+    return new Date(dateString).toLocaleDateString('id-ID', opts);
+};
+
 // --- API ACTIONS ---
 
 const fetchData = async () => {
     isLoading.value = true;
     try {
-        const response = await axios.get('/api/laporan', {
-            params: { period: period.value },
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        const { start, end } = getDateRange(period.value);
+
+        // Fetch Penjualan (Income)
+        const { data: penjualan, error: penErr } = await supabase
+            .from('penjualan')
+            .select('*')
+            .gte('created_at', start)
+            .lte('created_at', end);
+            
+        if (penErr) throw penErr;
+
+        // Fetch Penerimaan (Expense)
+        const { data: penerimaan, error: pnmErr } = await supabase
+            .from('penerimaan')
+            .select('*')
+            .gte('tgl_penerimaan', start)
+            .lte('tgl_penerimaan', end);
+            
+        if (pnmErr) throw pnmErr;
+
+        let total_income = 0;
+        let total_expense = 0;
+        let trxs = [];
+
+        // Aggregating Income
+        (penjualan || []).forEach(p => {
+            total_income += p.total_harga;
+            trxs.push({
+                id: `pen-${p.id}`,
+                type: 'income',
+                amount: p.total_harga,
+                date: formatDateDay(p.created_at),
+                rawDate: new Date(p.created_at),
+                desc: `Penjualan ${p.no_transaksi}`,
+                status: 'Selesai'
+            });
         });
+
+        // Aggregating Expense
+        (penerimaan || []).forEach(p => {
+            total_expense += p.total_harga;
+            trxs.push({
+                id: `pnm-${p.id}`,
+                type: 'expense',
+                amount: p.total_harga,
+                date: formatDateDay(p.tgl_penerimaan),
+                rawDate: new Date(p.tgl_penerimaan),
+                desc: `Restock Stok (Faktur: ${p.no_faktur})`,
+                status: 'Selesai'
+            });
+        });
+
+        // Sort descending by date
+        trxs.sort((a, b) => b.rawDate - a.rawDate);
+
+        stats.value = {
+            total_income,
+            total_expense,
+            net_profit: total_income - total_expense,
+            is_profitable: (total_income - total_expense) >= 0
+        };
         
-        stats.value = response.data.stats;
-        transactions.value = response.data.transactions;
+        transactions.value = trxs;
+        
     } catch (error) {
         console.error("Gagal load laporan", error);
     } finally {
@@ -34,26 +117,7 @@ const fetchData = async () => {
 };
 
 const printPdf = () => {
-    // Open in new tab which triggers window.print()
-    const token = localStorage.getItem('token');
-    // Note: Passing token in URL or cookies is needed for simple window.open if middleware checks auth.
-    // Since we are using Sanctum API token, window.open via standard GET won't carry the Header.
-    // For this MVP, we will assume middleware allows it OR use a trick.
-    // Simplest trick: We will utilize Axios to get the HTML blob, then open it.
-    
-    isLoading.value = true;
-    axios.get('/api/laporan/export-pdf', {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'text' // We expect HTML string
-    }).then(response => {
-        const newWindow = window.open('', '_blank');
-        newWindow.document.write(response.data);
-        newWindow.document.close();
-    }).catch(e => {
-        alert("Gagal mencetak laporan.");
-    }).finally(() => {
-        isLoading.value = false;
-    });
+    window.print(); // Since we don't have a backend PDF generator anymore
 };
 
 // --- WATCHERS ---

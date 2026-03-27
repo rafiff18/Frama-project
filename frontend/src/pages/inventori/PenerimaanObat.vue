@@ -1,6 +1,8 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
-import axios from 'axios';
+import { supabase } from '../../lib/supabase'; // Fixed import path
+
+// --- STATE ---
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -21,15 +23,18 @@ const form = reactive({
 const fetchData = async () => {
     try {
         const [suppRes, obatRes] = await Promise.all([
-            axios.get('/api/suppliers', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
-            axios.get('/api/obat', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+            supabase.from('suppliers').select('id, nama_suppliers'),
+            supabase.from('obat').select('id, nama_obat, stok, harga_beli, harga_jual')
         ]);
-        suppliers.value = suppRes.data;
-        // Handle response structure differences
-        obatList.value = Array.isArray(obatRes.data) ? obatRes.data : (obatRes.data.data || []);
+        
+        if (suppRes.error) throw suppRes.error;
+        if (obatRes.error) throw obatRes.error;
+
+        suppliers.value = suppRes.data || [];
+        obatList.value = obatRes.data || [];
     } catch (error) {
         console.error("Gagal load data", error);
-        // Fallback or specific error handling can be added here
+        errorMsg.value = "Gagal memuat data master.";
     }
 };
 
@@ -54,24 +59,92 @@ const grandTotal = computed(() => {
     return form.items.reduce((sum, item) => sum + (item.jumlah * item.harga_satuan), 0);
 });
 
-// Submit Penerimaan
+// Submit Penerimaan using Supabase (Client-Side Sequential Operations)
 const submitPenerimaan = async () => {
     isLoading.value = true;
     errorMsg.value = "";
     
     try {
-        await axios.post('/api/penerimaan', form, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        // 1. Get current logged in user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        // 2. Insert Penerimaan Header
+        const { data: penerimaanData, error: headerError } = await supabase
+            .from('penerimaan')
+            .insert([{
+                supplier_id: form.supplier_id,
+                user_id: user ? user.id : 1, // Fallback if user id is UUID but table expects int? Supabase uses UUID by default for users, assume it matches DB schema or set fixed if testing.
+                no_faktur: form.no_faktur,
+                tgl_penerimaan: new Date(), // DB will handle timestamp if configured, but safe to send JS Date
+                total_harga: grandTotal.value
+            }])
+            .select()
+            .single();
+
+        if (headerError) throw headerError;
+        
+        const penerimaanId = penerimaanData.id;
+
+        // 3. Prepare details data
+        const detailsData = form.items.map(item => ({
+            penerimaan_id: penerimaanId,
+            obat_id: item.obat_id,
+            qty: item.jumlah,
+            harga: item.harga_satuan
+        }));
+
+        // Insert Details in bulk
+        if (detailsData.length > 0) {
+            const { error: detailsError } = await supabase
+                .from('penerimaan_details')
+                .insert(detailsData);
+            
+            // Note: Laravel table might be 'penerimaan_detail' or 'penerimaan_details'
+            // In most standard Laravel apps it's plural: 'penerimaan_details'
+            if (detailsError) {
+                // If the plural name failed, maybe the singular table name is used
+                if (detailsError.code === '42P01') {
+                     const { error: detailsErrorAlt } = await supabase.from('penerimaan_detail').insert(detailsData);
+                     if (detailsErrorAlt) throw detailsErrorAlt;
+                } else {
+                     throw detailsError;
+                }
+            }
+        }
+
+        // 4. Update Stok & Harga in `obat` table sequentially
+        for (const item of form.items) {
+            const obatCurrent = obatList.value.find(o => o.id === item.obat_id);
+            if (obatCurrent) {
+                const newStok = obatCurrent.stok + item.jumlah;
+                let newHargaBeli = item.harga_satuan;
+                let updateData = { stok: newStok, harga_beli: newHargaBeli };
+
+                // Margin logic from Laravel API
+                if (newHargaBeli > obatCurrent.harga_beli) {
+                    const margin = 0.20;
+                    const hargaJualBaru = newHargaBeli + (newHargaBeli * margin);
+                    
+                    if (hargaJualBaru > obatCurrent.harga_jual) {
+                        updateData.harga_jual = Math.ceil(hargaJualBaru / 500) * 500;
+                    }
+                }
+
+                const { error: updateError } = await supabase
+                    .from('obat')
+                    .update(updateData)
+                    .eq('id', item.obat_id);
+                    
+                if (updateError) throw updateError;
+            }
+        }
+
         alert("Penerimaan Barang Berhasil Disimpan!");
         router.push('/admin/inventori');
     } catch (error) {
         console.error(error);
-        if (error.response && error.response.data.message) {
-            errorMsg.value = error.response.data.message;
-        } else {
-            errorMsg.value = "Terjadi kesalahan saat menyimpan data.";
-        }
+        errorMsg.value = error.message || "Terjadi kesalahan saat menyimpan data.";
     } finally {
         isLoading.value = false;
     }

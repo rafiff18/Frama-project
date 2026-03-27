@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
-import axios from 'axios';
+import { supabase } from '../../lib/supabase'; // Fixed import
 
 // State
 const staffList = ref([]);
@@ -16,7 +16,7 @@ const form = reactive({
     email: '',
     password: '',
     role: 'kasir', // default
-    status: 'Active' // Backend doesnt have status yet, so maybe just UI ? or assume active
+    status: 'Active' 
 });
 
 const errorMsg = ref("");
@@ -26,18 +26,13 @@ const fetchStaff = async () => {
     isLoading.value = true;
     errorMsg.value = "";
     try {
-        const response = await axios.get('/api/users', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        if (Array.isArray(response.data)) {
-            staffList.value = response.data;
-        } else {
-            console.error("Invalid data format:", response.data);
-            throw new Error("Format data tidak valid");
-        }
+        const { data, error } = await supabase.from('users').select('*').order('name', { ascending: true });
+        if (error) throw error;
+        
+        staffList.value = data || [];
     } catch (error) {
         console.error("Gagal ambil data staff", error);
-        errorMsg.value = "Gagal memuat data staf. Silakan coba lagi.";
+        errorMsg.value = "Gagal memuat data staf. Silakan coba lagi. Pastikan tabel 'users' sudah ada.";
     } finally {
         isLoading.value = false;
     }
@@ -47,7 +42,6 @@ onMounted(() => {
     fetchStaff();
 });
 
-// Computed
 // Computed
 const filteredStaff = computed(() => {
     return staffList.value.filter(user => {
@@ -88,24 +82,32 @@ const closeModal = () => {
 const saveUser = async () => {
     formErrors.value = {};
     try {
-        const token = localStorage.getItem('token');
-        const headers = { Authorization: `Bearer ${token}` };
+        // Catatan: Ini hanya mengelola tabel 'users' kustom profil.
+        // Untuk Auth (supabase.auth.admin.createUser), butuh Service Role Key / Edge Function.
+        const payload = {
+            name: form.name,
+            email: form.email,
+            role: form.role
+        };
+        
+        if (form.password && !isEditMode.value) {
+            // Kita tidak menyimpan password plaintext di DB custom
+            // Idealnya membuat Auth user juga.
+        }
 
         if (isEditMode.value) {
-            await axios.put(`/api/users/${form.id}`, form, { headers });
+            const { error } = await supabase.from('users').update(payload).eq('id', form.id);
+            if (error) throw error;
         } else {
-            await axios.post('/api/users', form, { headers });
+            const { error } = await supabase.from('users').insert([payload]);
+            if (error) throw error;
         }
         
         await fetchStaff(); // Refresh data
         closeModal();
     } catch (error) {
-        if (error.response && error.response.status === 422) {
-            formErrors.value = error.response.data;
-        } else {
-            console.error("Gagal simpan user", error);
-            alert("Terjadi kesalahan saat menyimpan data.");
-        }
+        console.error("Gagal simpan user", error);
+        alert(error.message || "Terjadi kesalahan saat menyimpan data.");
     }
 };
 
@@ -113,14 +115,13 @@ const deleteUser = async (id) => {
     if (!confirm("Yakin ingin menghapus user ini?")) return;
 
     try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`/api/users/${id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        const { error } = await supabase.from('users').delete().eq('id', id);
+        if (error) throw error;
+        
         await fetchStaff();
     } catch (error) {
         console.error("Gagal hapus user", error);
-        alert("Gagal menghapus user.");
+        alert(error.message || "Gagal menghapus user.");
     }
 };
 

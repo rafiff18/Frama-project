@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
-import axios from 'axios';
+import { supabase } from '../../lib/supabase'; // Fixed import path
+// Note: axios is removed
 
 const products = ref([]);
 const isLoading = ref(false);
@@ -34,12 +35,17 @@ const units = ['Pcs', 'Strip', 'Botol', 'Box', 'Tube', 'Sachet'];
 const fetchProducts = async () => {
     isLoading.value = true;
     try {
-        const response = await axios.get('/api/obat', {
-            params: { search: searchQuery.value },
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        // Handle response format from controller (wrapper data)
-        products.value = response.data.data;
+        let query = supabase.from('obat').select('*').order('nama_obat', { ascending: true });
+        
+        // Supabase text search for the search box
+        if (searchQuery.value) {
+            query = query.or(`nama_obat.ilike.%${searchQuery.value}%,kode_obat.ilike.%${searchQuery.value}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        
+        products.value = data || [];
     } catch (error) {
         console.error("Fetch Error", error);
     } finally {
@@ -47,7 +53,8 @@ const fetchProducts = async () => {
     }
 };
 
-// Computed property for filtering by search and selectedCategory
+// Computed property for filtering by selectedCategory
+// (Search is now also handled locally as a fallback, but primary is DB)
 const filteredProducts = computed(() => {
     let result = products.value;
 
@@ -55,7 +62,7 @@ const filteredProducts = computed(() => {
         result = result.filter(p => p.kategori === selectedCategory.value);
     }
     
-    // API already handles search, but we fall back client side for speed
+    // Fallback local search
     if (searchQuery.value) {
         const lower = searchQuery.value.toLowerCase();
         result = result.filter(p => 
@@ -73,28 +80,45 @@ const filterCategories = computed(() => {
     return ["Semua", ...Array.from(cats)].filter(Boolean);
 });
 
-// Export Excel
+// Export Excel (Since no backend, we manually create CSV from client side)
 const exportExcel = () => {
     isLoading.value = true;
-    const token = localStorage.getItem('token');
-    
-    axios.get('/api/obat/export', {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob'
-    }).then((response) => {
-        const url = window.URL.createObjectURL(new Blob([response.data]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `inventory_${new Date().toISOString().slice(0,10)}.csv`);
+    try {
+        if (!products.value || products.value.length === 0) {
+            alert("Tidak ada data untuk diexport!");
+            return;
+        }
+
+        const headers = ["Kode Obat", "Nama Obat", "Kategori", "Stok", "Satuan", "Min Stok", "Harga Beli", "Harga Jual", "Tgl Kadaluarsa"];
+        const csvContent = [
+            headers.join(","),
+            ...products.value.map(p => [
+                p.kode_obat,
+                `"${p.nama_obat}"`,
+                p.kategori,
+                p.stok,
+                p.satuan,
+                p.stok_minimal,
+                p.harga_beli,
+                p.harga_jual,
+                p.tgl_kadaluarsa
+            ].join(","))
+        ].join("\n");
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `inventory_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    }).catch(e => {
-        console.error(e);
-        alert("Gagal export data. Pastikan anda sudah login.");
-    }).finally(() => {
+    } catch (error) {
+        console.error(error);
+        alert("Gagal export data.");
+    } finally {
         isLoading.value = false;
-    });
+    }
 };
 
 // Search Watcher
@@ -116,7 +140,7 @@ const openModal = (item = null) => {
         form.kode_obat = item.kode_obat;
         form.nama_obat = item.nama_obat;
         form.kategori = item.kategori;
-        form.stok = item.stok; // Note: usually stock is not edited directly here if we have Penerimaan, but allowed for correction
+        form.stok = item.stok;
         form.unit = item.satuan;
         form.stok_minimal = item.stok_minimal;
         form.harga_beli = item.harga_beli;
@@ -160,25 +184,24 @@ const saveProduct = async () => {
     };
 
     try {
-        const url = isEditing.value ? `/api/obat/${form.id}` : '/api/obat';
-        const method = isEditing.value ? 'put' : 'post';
-
-        await axios[method](url, payload, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        if (isEditing.value) {
+            const { error } = await supabase
+                .from('obat')
+                .update(payload)
+                .eq('id', form.id);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase
+                .from('obat')
+                .insert([payload]);
+            if (error) throw error;
+        }
 
         await fetchProducts();
         closeModal();
     } catch (error) {
         console.error(error);
-        if (error.response && error.response.data.message) {
-            errorMsg.value = error.response.data.message;
-        } else if (error.response && error.response.data) {
-            // Laravel Validation errors usually come as object
-            errorMsg.value = Object.values(error.response.data).flat().join(', ');
-        } else {
-            errorMsg.value = "Gagal menyimpan data.";
-        }
+        errorMsg.value = error.message || "Gagal menyimpan data.";
     } finally {
         isLoading.value = false;
     }
@@ -188,12 +211,15 @@ const deleteProduct = async (id) => {
     if (!confirm("Yakin ingin menghapus obat ini?")) return;
     isLoading.value = true;
     try {
-        await axios.delete(`/api/obat/${id}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const { error } = await supabase
+            .from('obat')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+        
         await fetchProducts();
     } catch (e) {
-        alert("Gagal menghapus obat.");
+        alert(e.message || "Gagal menghapus obat.");
     } finally {
         isLoading.value = false;
     }

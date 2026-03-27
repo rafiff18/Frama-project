@@ -177,7 +177,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios';
+import { supabase } from '../lib/supabase'; // Fixed import
 
 // States for Dashboard Data
 const omzetHariIni = ref(0);
@@ -195,51 +195,113 @@ const fetchDashboardData = async () => {
     try {
         isLoading.value = true;
         
-        // Asumsi base URL untuk API diseting di interceptor atau menggunakan VITE_API_BASE_URL
-        const response = await axios.get('/api/dashboard', {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+        // 1. Fetch All Obat (for Stocks, Exp, Total)
+        const { data: obatData, error: obatErr } = await supabase.from('obat').select('*');
+        if (obatErr) throw obatErr;
         
-        if (response.data.success) {
-            const data = response.data.data;
-            
-            // Metrics
-            omzetHariIni.value = data.omzet_hari_ini || 0;
-            stokMenipisCount.value = data.stok_menipis_count || 0;
-            hampirKadaluarsaCount.value = data.hampir_kadaluarsa_count || 0;
-            totalProduk.value = data.total_produk || 0;
+        const obatList = obatData || [];
+        totalProduk.value = obatList.length;
 
-            // Warning Items (gabung array stok menipis dan hampir kadaluarsa)
-            const warningStok = (data.stok_menipis_items || []).map(item => ({
-                type: 'stok',
+        const stokMenipisList = obatList.filter(o => o.stok <= o.stok_minimal);
+        stokMenipisCount.value = stokMenipisList.length;
+
+        const today = new Date();
+        const next30Days = new Date();
+        next30Days.setDate(today.getDate() + 30);
+        
+        const hampirExpList = obatList.filter(o => {
+            if (!o.tgl_kadaluarsa) return false;
+            const expD = new Date(o.tgl_kadaluarsa);
+            return expD <= next30Days && expD >= today; // Warning if within next 30 days
+        });
+        hampirKadaluarsaCount.value = hampirExpList.length;
+
+        // Warning Items formatting
+        const warningStok = stokMenipisList.slice(0, 3).map(item => ({
+            type: 'stok',
+            title: item.nama_obat,
+            desc: `Sisa ${item.stok} (Min: ${item.stok_minimal})`,
+            icon: '📦',
+            colorClass: 'orange' 
+        }));
+
+        const warningExp = hampirExpList.slice(0, 3).map(item => {
+            const expDate = new Date(item.tgl_kadaluarsa).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+            return {
+                type: 'exp',
                 title: item.nama_obat,
-                desc: `Sisa ${item.stok} (Pesan sekarang)`,
-                icon: '📦',
-                colorClass: 'orange' 
-            }));
+                desc: `Exp: ${expDate}`,
+                icon: '⏰',
+                colorClass: 'red'
+            };
+        });
 
-            const warningExp = (data.hampir_kadaluarsa_items || []).map(item => {
-                // Parse date untuk display yang baagus
-                const expDate = new Date(item.tgl_kadaluarsa).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        peringatanItems.value = [...warningStok, ...warningExp].slice(0, 5);
+
+        // 2. Fetch Penjualan Today (for Omzet)
+        const startOfToday = new Date();
+        startOfToday.setHours(0,0,0,0);
+        
+        const { data: penjualanToday, error: ptErr } = await supabase
+            .from('penjualan')
+            .select('total_harga')
+            .gte('created_at', startOfToday.toISOString());
+            
+        if (!ptErr && penjualanToday) {
+            omzetHariIni.value = penjualanToday.reduce((sum, p) => sum + p.total_harga, 0);
+        }
+
+        // 3. Fetch Recent Transactions
+        const { data: recentTrx, error: rtErr } = await supabase
+            .from('penjualan')
+            .select('id, no_transaksi, total_harga, created_at')
+            .order('created_at', { ascending: false })
+            .limit(5);
+
+        if (!rtErr && recentTrx) {
+            recentTransactions.value = recentTrx.map(trx => {
+                const dt = new Date(trx.created_at);
+                const timeStr = dt.getHours().toString().padStart(2, '0') + ':' + dt.getMinutes().toString().padStart(2, '0');
+                
                 return {
-                    type: 'exp',
-                    title: item.nama_obat,
-                    desc: `Exp: ${expDate}`,
-                    icon: '⏰',
-                    colorClass: 'red'
+                    id: trx.id,
+                    no_transaksi: trx.no_transaksi,
+                    deskripsi_obat: 'Transaksi Selesai', // In backend this was a concatenated string, simplistic approach here
+                    total_harga: trx.total_harga,
+                    waktu: timeStr
                 };
             });
+        }
 
-            // Ambil maksimal 5 warning untuk tabel mini
-            peringatanItems.value = [...warningStok, ...warningExp].slice(0, 5);
+        // 4. Fetch Penjualan Details for Top Items (This month)
+        // Simplified top items: fetch details of last 50 transactions, and count
+        const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+        const { data: pDetails, error: pdErr } = await supabase
+            .from('penjualan_details')
+            .select('obat_id, qty, penjualan!inner(created_at)')
+            .gte('penjualan.created_at', firstDayOfMonth)
+            .limit(100);
 
-            // Top Items
-            topItems.value = data.top_items || [];
+        if (!pdErr && pDetails) {
+            const itemCounts = {};
+            pDetails.forEach(d => {
+                if(!itemCounts[d.obat_id]) itemCounts[d.obat_id] = 0;
+                itemCounts[d.obat_id] += d.qty;
+            });
+            
+            const sortedItems = Object.keys(itemCounts)
+                .map(id => ({ obat_id: id, total_qty: itemCounts[id] }))
+                .sort((a, b) => b.total_qty - a.total_qty)
+                .slice(0, 5);
 
-            // Recent Transactions
-            recentTransactions.value = data.recent_transactions || [];
+            topItems.value = sortedItems.map(item => {
+                const obat = obatList.find(o => o.id == item.obat_id);
+                return {
+                    obat_id: item.obat_id,
+                    total_qty: item.total_qty,
+                    obat: { nama_obat: obat ? obat.nama_obat : 'Unknown Item' }
+                };
+            });
         }
 
     } catch (error) {

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
-import axios from 'axios';
+import { supabase } from '../../lib/supabase'; // Fixed import
 
 // State
 const products = ref([]);
@@ -18,13 +18,16 @@ const errorMsg = ref("");
 const fetchProducts = async () => {
     isLoading.value = true;
     try {
-        const response = await axios.get('/api/obat', {
-            params: { search: searchQuery.value },
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
-        // API returns { success: true, data: [...] } or just [...] depend on controller
-        // Based on ObatController: return response()->json(['success'=>true, 'data'=>...])
-        products.value = response.data.data || response.data;
+        let query = supabase.from('obat').select('*').order('nama_obat', { ascending: true });
+        
+        if (searchQuery.value) {
+            query = query.or(`nama_obat.ilike.%${searchQuery.value}%,kode_obat.ilike.%${searchQuery.value}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        
+        products.value = data || [];
     } catch (error) {
         console.error("Gagal load obat", error);
     } finally {
@@ -56,7 +59,7 @@ const filteredProducts = computed(() => {
         result = result.filter(p => p.kategori === selectedCategory.value);
     }
     
-    // API already handles search via backend, but just in case user types fast
+    // Fallback search client side
     if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
         result = result.filter(p => 
@@ -95,7 +98,7 @@ const addToCart = (product) => {
             id: product.id, 
             name: product.nama_obat, 
             price: product.harga_jual, 
-            harga_jual: product.harga_jual, // backend need consistency
+            harga_jual: product.harga_jual, 
             qty: 1, 
             stock: product.stok 
         });
@@ -129,31 +132,64 @@ const checkout = async () => {
     isLoading.value = true;
     errorMsg.value = "";
 
-    const payload = {
-        items: cart.value.map(item => ({
-            obat_id: item.id,
-            jumlah: item.qty
-        })),
-        bayar: paymentAmount.value
-    };
-
     try {
-        await axios.post('/api/penjualan', payload, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // 1. Dapatkan antrian / nomor transaksi secara manual
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const randomStr = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        const no_transaksi = `TRX-${dateStr}-${randomStr}`;
+
+        // 2. Insert Penjualan
+        const { data: penjualan, error: pError } = await supabase.from('penjualan')
+            .insert([{
+                user_id: user ? user.id : 1, // uuid logic handle later if needed
+                no_transaksi: no_transaksi,
+                total_harga: total.value,
+                bayar: paymentAmount.value,
+                kembali: kembalian.value,
+                method: 'cash'
+            }])
+            .select()
+            .single();
+
+        if (pError) throw pError;
+
+        // 3. Insert Details
+        const detailsData = cart.value.map(item => ({
+            penjualan_id: penjualan.id,
+            obat_id: item.id,
+            qty: item.qty,
+            harga: item.price,
+            subtotal: item.price * item.qty
+        }));
+
+        const { error: pdError } = await supabase.from('penjualan_details').insert(detailsData);
+        if (pdError) {
+             // Fallback singular table
+             if (pdError.code === '42P01') {
+                 const { error: pdAltErr } = await supabase.from('penjualan_detail').insert(detailsData);
+                 if (pdAltErr) throw pdAltErr;
+             } else {
+                 throw pdError;
+             }
+        }
+
+        // 4. Update Stok
+        for (const item of cart.value) {
+            const newStok = item.stock - item.qty;
+            const { error: sError } = await supabase.from('obat').update({ stok: newStok }).eq('id', item.id);
+            if (sError) console.error("Update stock error:", sError); // non blocking error
+        }
         
         alert(`Transaksi Berhasil!\nKembalian: ${formatRp(kembalian.value)}`);
         
         cart.value = [];
         paymentAmount.value = 0;
-        fetchProducts(); // Refresh stock
+        await fetchProducts(); // Refresh stock
     } catch (error) {
         console.error(error);
-        if (error.response && error.response.data.message) {
-            errorMsg.value = error.response.data.message;
-        } else {
-            errorMsg.value = "Transaksi gagal.";
-        }
+        errorMsg.value = error.message || "Transaksi gagal.";
     } finally {
         isLoading.value = false;
     }

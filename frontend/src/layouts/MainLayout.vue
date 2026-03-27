@@ -1,82 +1,113 @@
 <template>
-  <div class="layout-wrapper">
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <img :src="logoImg" alt="RR Farma Logo" class="logo-image" />
-        <div class="brand-text">
-            <span class="brand-title">RR FARMA</span>
-            <small class="brand-subtitle">Apotek & Alat Kesehatan</small>
+  <div class="flex min-h-screen bg-slate-50 dark:bg-slate-900 font-outfit text-slate-800 dark:text-slate-100 transition-colors duration-300">
+    
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-white dark:bg-slate-900 flex flex-col fixed h-screen z-20 border-r border-slate-200 dark:border-slate-800 transition-all shadow-sm">
+      
+      <!-- Sidebar Header -->
+      <div class="px-6 py-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-800/50 cursor-pointer" @click="router.push('/admin')">
+        <div class="p-2 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl border border-emerald-100 dark:border-emerald-800">
+          <img :src="logoImg" alt="RR Farma" class="w-8 h-8 object-contain drop-shadow-sm" />
+        </div>
+        <div class="flex flex-col">
+          <span class="font-extrabold text-lg tracking-tight text-slate-900 dark:text-white leading-tight">RR FARMA</span>
+          <span class="text-[10px] font-bold text-primary uppercase tracking-wider">Apotek & Alkes</span>
         </div>
       </div>
 
-      <nav class="menu">
-        <div class="menu-category">MENU UTAMA</div>
+      <!-- Navigation Menu -->
+      <nav class="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar space-y-1">
+        <div class="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Menu Utama</div>
         
-        <router-link v-if="['superadmin', 'owner', 'apoteker'].includes(userRole)" to="/admin" class="menu-item" :class="{ 'active': route.path === '/admin' }">
-          <span class="icon">🏁</span> Dashboard
+        <router-link v-if="['superadmin', 'owner', 'apoteker'].includes(userRole)" to="/admin" class="group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200" :class="{ 'bg-primary text-white shadow-md shadow-primary/20': route.path === '/admin', 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-primary': route.path !== '/admin' }">
+          <span class="text-lg opacity-80 group-hover:scale-110 transition-transform" :class="{ 'opacity-100': route.path === '/admin' }">🏁</span> Dashboard
         </router-link>
 
-        <router-link v-if="['superadmin', 'kasir'].includes(userRole)" to="/admin/kasir" class="menu-item" active-class="active">
-          <span class="icon">🛒</span> Kasir (POS)
+        <router-link v-if="['superadmin', 'kasir'].includes(userRole)" to="/admin/kasir" class="group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200" active-class="bg-primary text-white shadow-md shadow-primary/20" :class="route.path.includes('/kasir') ? '' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-primary'">
+          <span class="text-lg opacity-80 group-hover:scale-110 transition-transform">🛒</span> Kasir (POS)
         </router-link>
 
-        <router-link v-if="['superadmin', 'owner'].includes(userRole)" to="/admin/inventori" class="menu-item" active-class="active">
-          <span class="icon">💊</span> Inventori Obat
+        <router-link v-if="['superadmin', 'owner'].includes(userRole)" to="/admin/inventori" class="group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200" active-class="bg-primary text-white shadow-md shadow-primary/20" :class="route.path.includes('/inventori') ? '' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-primary'">
+          <span class="text-lg opacity-80 group-hover:scale-110 transition-transform">💊</span> Inventori Obat
         </router-link>
 
-        <router-link v-if="['superadmin', 'apoteker'].includes(userRole)" to="/admin/penerimaan" class="menu-item" active-class="active">
-          <span class="icon">📫</span> Penerimaan (Stok)
+        <router-link v-if="['superadmin', 'apoteker'].includes(userRole)" to="/admin/penerimaan" class="group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200" active-class="bg-primary text-white shadow-md shadow-primary/20" :class="route.path.includes('/penerimaan') ? '' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-primary'">
+          <span class="text-lg opacity-80 group-hover:scale-110 transition-transform">📫</span> Penerimaan (Stok)
         </router-link>
 
-        <router-link v-if="['superadmin', 'apoteker'].includes(userRole)" to="/admin/suppliers" class="menu-item" active-class="active">
-          <span class="icon">🚚</span> Supplier
+        <router-link v-if="['superadmin', 'apoteker'].includes(userRole)" to="/admin/suppliers" class="group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200" active-class="bg-primary text-white shadow-md shadow-primary/20" :class="route.path.includes('/suppliers') ? '' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-primary'">
+          <span class="text-lg opacity-80 group-hover:scale-110 transition-transform">🚚</span> Supplier
         </router-link>
 
-        <router-link v-if="['superadmin', 'owner'].includes(userRole)" to="/admin/laporan" class="menu-item" active-class="active">
-          <span class="icon">📊</span> Laporan Keuangan
+        <router-link v-if="['superadmin', 'owner'].includes(userRole)" to="/admin/laporan" class="group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200" active-class="bg-primary text-white shadow-md shadow-primary/20" :class="route.path.includes('/laporan') ? '' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-primary'">
+          <span class="text-lg opacity-80 group-hover:scale-110 transition-transform">📊</span> Laporan Keuangan
         </router-link>
 
-        <router-link v-if="['superadmin'].includes(userRole)" to="/admin/staf" class="menu-item" active-class="active">
-          <span class="icon">👥</span> Kelola Staf
-        </router-link>
+        <div v-if="['superadmin'].includes(userRole)" class="pt-4 pb-2">
+            <div class="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Administrator</div>
+            <router-link to="/admin/staf" class="group flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200" active-class="bg-slate-800 dark:bg-slate-700 text-white shadow-md" :class="route.path.includes('/staf') ? '' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'">
+            <span class="text-lg opacity-80 group-hover:scale-110 transition-transform">👥</span> Kelola Staf
+            </router-link>
+        </div>
       </nav>
 
-      <div class="sidebar-footer">
-        <div class="role-selector">
-          <small>LOGIN SEBAGAI</small>
-          <div class="user-profile">
-            <div class="avatar">👩‍⚕️</div>
-            <div class="user-details">
-                <span class="name">{{ user.name || 'User' }}</span>
-                <span class="role">{{ user.role || 'Guest' }}</span>
+      <!-- Sidebar Footer User Profile -->
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-900/50">
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700">
+            <div class="flex items-center gap-3 mb-3 pb-3 border-b border-slate-100 dark:border-slate-700/50">
+                <div class="w-10 h-10 rounded-full bg-primary-light/20 flex items-center justify-center text-xl shadow-inner text-primary-dark">
+                    👨‍⚕️
+                </div>
+                <div class="flex flex-col truncate">
+                    <span class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ user.name || 'User' }}</span>
+                    <span class="text-xs font-semibold text-primary capitalize">{{ user.role || 'Guest' }}</span>
+                </div>
             </div>
-          </div>
+            <button @click="logout" class="w-full flex items-center justify-center gap-2 text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 py-2 rounded-lg transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Keluar Sistem
+            </button>
         </div>
-        <a href="#" @click.prevent="logout" class="logout-link">
-          <span class="icon">🚪</span> Keluar
-        </a>
       </div>
     </aside>
 
-    <main class="main-content">
-      <header class="top-navbar">
-        <div class="breadcrumb">
-          <span class="sub-title">SISTEM MANAJEMEN APOTEK</span>
-          <h2 class="page-title">{{ currentPageTitle }}</h2>
+    <!-- Main Workspace -->
+    <main class="flex-1 ml-[280px] flex flex-col min-h-screen">
+      
+      <!-- Top Navbar -->
+      <header class="sticky top-0 z-10 glass bg-white/80 dark:bg-slate-900/80 px-8 py-5 border-b border-slate-200/60 dark:border-slate-800/60 flex justify-between items-center shadow-sm">
+        <div class="flex flex-col">
+          <span class="text-[10px] font-extrabold text-primary tracking-widest uppercase mb-0.5">Sistem Manajemen Apotek</span>
+          <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">{{ currentPageTitle }}</h2>
         </div>
-        <div class="header-actions">
+        
+        <div class="flex items-center gap-4">
             <!-- Theme Toggle -->
-            <button @click="toggleTheme" class="btn-theme-toggle" :title="isDarkMode ? 'Beralih ke Terang' : 'Beralih ke Gelap'">
-                {{ isDarkMode ? '🌙' : '☀️' }}
+            <button @click="toggleTheme" class="relative group p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-all focus:outline-none" :title="isDarkMode ? 'Beralih ke Terang' : 'Beralih ke Gelap'">
+                <div class="absolute inset-0 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-colors"></div>
+                <svg v-if="!isDarkMode" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 relative sm-rotate" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 relative sm-rotate text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.02 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
             </button>
-            <div class="user-info">
-                <div class="avatar-small">{{ userRole.charAt(0).toUpperCase() }}</div>
+            
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center text-white font-bold shadow-md ring-2 ring-white dark:ring-slate-800">
+                {{ userRole.charAt(0).toUpperCase() }}
             </div>
         </div>
       </header>
       
-      <div class="content-body">
-        <router-view></router-view> 
+      <!-- Page Content -->
+      <div class="flex-1 p-8">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view> 
       </div>
     </main>
   </div>
@@ -85,7 +116,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import axios from 'axios';
+import { supabase } from '../lib/supabase';
 import logoImg from '../assets/images/logo.png';
 
 const isDarkMode = ref(false);
@@ -97,18 +128,18 @@ const user = JSON.parse(localStorage.getItem('user') || '{}');
 const userRole = String(user.role || 'guest');
 
 const currentPageTitle = computed(() => {
-    if (route.path === '/admin') return 'Dashboard';
+    if (route.path === '/admin') return 'Dashboard Utama';
     if (route.path.includes('/admin/inventori')) return 'Inventori Obat';
-    if (route.path.includes('/admin/penerimaan')) return 'Penerimaan Barang';
+    if (route.path.includes('/admin/penerimaan')) return 'Penerimaan Stok';
     if (route.path.includes('/admin/suppliers')) return 'Master Supplier';
-    if (route.path.includes('/admin/kasir')) return 'Kasir Apotek';
-    if (route.path.includes('/admin/staf')) return 'Kelola Staf';
-    return 'Halaman';
+    if (route.path.includes('/admin/kasir')) return 'Terminal Kasir';
+    if (route.path.includes('/admin/laporan')) return 'Laporan Keuangan';
+    if (route.path.includes('/admin/staf')) return 'Kelola Karyawan';
+    return 'Halaman Sistem';
 });
 
 // --- THEME LOGIC ---
 onMounted(() => {
-    // Check local storage preference
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         isDarkMode.value = true;
@@ -129,9 +160,7 @@ const toggleTheme = () => {
 
 const logout = async () => {
     try {
-        await axios.post('/api/logout', {}, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        await supabase.auth.signOut();
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         router.push('/login');
@@ -142,79 +171,38 @@ const logout = async () => {
 };
 </script>
 
-<style scoped>
-:root {
-    --primary: #10b981;
-    --primary-dark: #059669;
-    --bg-light: #ecfdf5;
-    --sidebar-bg: #0f172a;
+<style>
+/* Custom Scrollbar for sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.2);
+    border-radius: 4px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.5);
 }
 
-.layout-wrapper {
-  display: flex; min-height: 100vh; font-family: 'Inter', sans-serif;
-  /* background-color handled by global var(--bg-body) */
+/* Page Transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
-.sidebar {
-  width: 260px; background-color: var(--sidebar-bg); color: var(--sidebar-text);
-  display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 10;
-  border-right: 1px solid var(--border-color);
+/* Hover rotation class */
+.sm-rotate {
+    transition: transform 0.3s ease;
 }
-
-.sidebar-header {
-  padding: 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color);
+.group:hover .sm-rotate {
+    transform: rotate(15deg) scale(1.1);
 }
-
-.logo-image {
-  width: 40px; height: 40px; object-fit: contain;
-}
-
-.brand-text { display: flex; flex-direction: column; }
-.brand-title { color: white; font-weight: 700; font-size: 16px; }
-.brand-subtitle { font-size: 10px; color: #10b981; font-weight: 600; letter-spacing: 0.5px; }
-
-.menu { padding: 20px 16px; flex: 1; }
-.menu-category { font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 1px; }
-
-.menu-item {
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px;
-  color: var(--sidebar-text); text-decoration: none; border-radius: 8px; margin-bottom: 4px;
-  transition: all 0.3s; font-weight: 500; font-size: 14px;
-}
-
-.menu-item:hover { background-color: var(--sidebar-hover); color: white; }
-
-.menu-item.active {
-  background-color: var(--primary); color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.sidebar-footer { padding: 20px; border-top: 1px solid var(--border-color); background-color: transparent; }
-.role-selector small { display: block; font-size: 10px; margin-bottom: 8px; color: var(--text-muted); }
-
-.user-profile { display: flex; align-items: center; gap: 10px; }
-.avatar { width: 32px; height: 32px; background: var(--bg-hover); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-.user-details { display: flex; flex-direction: column; }
-.name { color: var(--text-main); font-size: 13px; font-weight: 600; }
-.role { color: var(--primary); font-size: 11px; }
-
-.logout-link { display: flex; align-items: center; gap: 10px; margin-top: 15px; color: var(--text-muted); text-decoration: none; font-size: 13px; }
-.logout-link:hover { color: var(--danger); }
-
-.main-content { margin-left: 260px; flex: 1; display: flex; flex-direction: column; }
-
-.top-navbar {
-  background: var(--bg-card); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid var(--border-color); transition: background-color 0.3s;
-}
-
-.sub-title { font-size: 11px; color: var(--primary); font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-.page-title { margin: 5px 0 0; font-size: 26px; color: var(--text-main); font-weight: 800; transition: color 0.3s; }
-
-.header-actions { display: flex; align-items: center; gap: 20px; }
-.btn-theme-toggle { background: var(--bg-hover); border: 1px solid var(--border-color); border-radius: 50%; width: 40px; height: 40px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: 0.2s; }
-.btn-theme-toggle:hover { background: var(--border-color); transform: rotate(15deg); }
-.avatar-small { width: 36px; height: 36px; background: var(--success-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; border: 2px solid var(--primary); }
-
-.content-body { padding: 30px 40px; }
 </style>
