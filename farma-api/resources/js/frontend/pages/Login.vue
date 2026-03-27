@@ -7,6 +7,11 @@ import logoImg from '../../../images/logo.png';
 const router = useRouter();
 const errorMessage = ref(''); 
 const isLoading = ref(false); 
+const showPassword = ref(false);
+
+const togglePassword = () => {
+    showPassword.value = !showPassword.value;
+};
 
 const form = reactive({
     email: '',
@@ -86,11 +91,14 @@ const handleLogin = async () => {
                     <div class="input-wrapper">
                         <span class="input-icon">🔒</span>
                         <input 
-                            type="password" 
+                            :type="showPassword ? 'text' : 'password'" 
                             v-model="form.password" 
                             placeholder="••••••••"
                             required
                         >
+                        <button type="button" class="password-toggle" @click="togglePassword" :title="showPassword ? 'Sembunyikan password' : 'Lihat password'">
+                            {{ showPassword ? '🙈' : '👁️' }}
+                        </button>
                     </div>
                 </div>
 
@@ -150,7 +158,7 @@ const handleLogin = async () => {
 .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.7; }
 
 .form-group input {
-    width: 100%; padding: 12px 12px 12px 40px;
+    width: 100%; padding: 12px 40px 12px 40px;
     border: 1px solid var(--border-color); border-radius: 10px; box-sizing: border-box;
     font-size: 14px; transition: all 0.3s; background: var(--input-bg); color: var(--text-main);
 }
@@ -159,6 +167,13 @@ const handleLogin = async () => {
     border-color: var(--primary); background: var(--bg-card); outline: none;
     box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
+
+.password-toggle {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; font-size: 16px; cursor: pointer;
+    opacity: 0.7; padding: 0; outline: none; transition: 0.3s;
+}
+.password-toggle:hover { opacity: 1; }
 
 .forgot-pass { text-align: right; margin-bottom: 20px; }
 .forgot-pass a { color: var(--primary); font-size: 12px; text-decoration: none; font-weight: 600; }
