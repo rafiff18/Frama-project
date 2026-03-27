@@ -1,0 +1,57 @@
+vite v8.0.3 building client environment for production...
+[2Ktransforming...[32m✓[39m 90 modules transformed.
+✗ Build failed in 371ms
+error during build:
+Build failed with 3 errors:
+
+[31m[UNRESOLVED_IMPORT] Error:[0m Could not resolve '../../../images/logo.png' in src/layouts/MainLayout.vue
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/layouts/MainLayout.vue:27:21 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m27 │[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249ml[0m[38;5;249mo[0m[38;5;249mg[0m[38;5;249mo[0m[38;5;249mI[0m[38;5;249mm[0m[38;5;249mg[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m [0m'../../../images/logo.png'[38;5;249m;[0m
+ [38;5;240m   │[0m                     ─────────────┬────────────  
+ [38;5;240m   │[0m                                  ╰────────────── Module not found.
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: 'src/layouts/MainLayout.vue' is imported by the following path:
+ [38;5;240m   │[0m         - src/layouts/MainLayout.vue
+ [38;5;240m   │[0m         - src/router/index.js
+ [38;5;240m   │[0m         - src/main.js
+ [38;5;240m   │[0m         - index.html
+[38;5;246m────╯[0m
+
+[31m[UNRESOLVED_IMPORT] Error:[0m Could not resolve '../../../images/logo.png' in src/pages/Login.vue
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/Login.vue:22:21 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m22 │[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249ml[0m[38;5;249mo[0m[38;5;249mg[0m[38;5;249mo[0m[38;5;249mI[0m[38;5;249mm[0m[38;5;249mg[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m [0m'../../../images/logo.png'[38;5;249m;[0m
+ [38;5;240m   │[0m                     ─────────────┬────────────  
+ [38;5;240m   │[0m                                  ╰────────────── Module not found.
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: 'src/pages/Login.vue' is imported by the following path:
+ [38;5;240m   │[0m         - src/pages/Login.vue
+ [38;5;240m   │[0m         - src/router/index.js
+ [38;5;240m   │[0m         - src/main.js
+ [38;5;240m   │[0m         - index.html
+[38;5;246m────╯[0m
+
+[31m[UNRESOLVED_IMPORT] Error:[0m Could not resolve '../../../images/logo.png' in src/pages/LandingPage.vue
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/pages/LandingPage.vue:12:21 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m12 │[0m [38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m [0m[38;5;249ml[0m[38;5;249mo[0m[38;5;249mg[0m[38;5;249mo[0m[38;5;249mI[0m[38;5;249mm[0m[38;5;249mg[0m[38;5;249m [0m[38;5;249mf[0m[38;5;249mr[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249m [0m'../../../images/logo.png'[38;5;249m;[0m
+ [38;5;240m   │[0m                     ─────────────┬────────────  
+ [38;5;240m   │[0m                                  ╰────────────── Module not found.
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: 'src/pages/LandingPage.vue' is imported by the following path:
+ [38;5;240m   │[0m         - src/pages/LandingPage.vue
+ [38;5;240m   │[0m         - src/router/index.js
+ [38;5;240m   │[0m         - src/main.js
+ [38;5;240m   │[0m         - index.html
+[38;5;246m────╯[0m
+
+    at aggregateBindingErrorsIntoJsError (file:///E:/PROJECT/farma/Frama-project/frontend/node_modules/rolldown/dist/shared/error-BLhcSyeg.mjs:48:18)
+    at unwrapBindingResult (file:///E:/PROJECT/farma/Frama-project/frontend/node_modules/rolldown/dist/shared/error-BLhcSyeg.mjs:18:128)
+    at #build (file:///E:/PROJECT/farma/Frama-project/frontend/node_modules/rolldown/dist/shared/rolldown-build-CPrIX9V6.mjs:3313:34)
+    at async buildEnvironment (file:///E:/PROJECT/farma/Frama-project/frontend/node_modules/vite/dist/node/chunks/node.js:32849:64)
+    at async Object.build (file:///E:/PROJECT/farma/Frama-project/frontend/node_modules/vite/dist/node/chunks/node.js:33271:19)
+    at async Object.buildApp (file:///E:/PROJECT/farma/Frama-project/frontend/node_modules/vite/dist/node/chunks/node.js:33268:153)
+    at async CAC.<anonymous> (file:///E:/PROJECT/farma/Frama-project/frontend/node_modules/vite/dist/node/cli.js:778:3) {
+  errors: [Getter/Setter]
+}
