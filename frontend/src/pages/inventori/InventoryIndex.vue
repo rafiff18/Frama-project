@@ -170,6 +170,8 @@ const saveProduct = async () => {
     isLoading.value = true;
     errorMsg.value = "";
 
+    const nowIso = new Date().toISOString();
+
     // Mapping payload keys to backend expectations
     const payload = {
         kode_obat: form.kode_obat,
@@ -180,7 +182,8 @@ const saveProduct = async () => {
         stok_minimal: form.stok_minimal,
         harga_beli: form.harga_beli,
         harga_jual: form.harga_jual,
-        tgl_kadaluarsa: form.tgl_kadaluarsa
+        tgl_kadaluarsa: form.tgl_kadaluarsa,
+        updated_at: nowIso
     };
 
     try {
@@ -191,6 +194,7 @@ const saveProduct = async () => {
                 .eq('id', form.id);
             if (error) throw error;
         } else {
+            payload.created_at = nowIso;
             const { error } = await supabase
                 .from('obat')
                 .insert([payload]);

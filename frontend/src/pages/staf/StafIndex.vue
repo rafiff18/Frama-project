@@ -82,12 +82,14 @@ const closeModal = () => {
 const saveUser = async () => {
     formErrors.value = {};
     try {
+        const nowIso = new Date().toISOString();
         // Catatan: Ini hanya mengelola tabel 'users' kustom profil.
         // Untuk Auth (supabase.auth.admin.createUser), butuh Service Role Key / Edge Function.
         const payload = {
             name: form.name,
             email: form.email,
-            role: form.role
+            role: form.role,
+            updated_at: nowIso
         };
         
         if (form.password && !isEditMode.value) {
@@ -99,6 +101,7 @@ const saveUser = async () => {
             const { error } = await supabase.from('users').update(payload).eq('id', form.id);
             if (error) throw error;
         } else {
+            payload.created_at = nowIso;
             const { error } = await supabase.from('users').insert([payload]);
             if (error) throw error;
         }

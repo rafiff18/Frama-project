@@ -11,6 +11,8 @@ const isListView = ref(false); // Default to Grid view
 const isLoading = ref(false);
 const paymentAmount = ref(0); // Uang yang dibayar
 const errorMsg = ref("");
+const successMsg = ref("");
+const showConfirmDialog = ref(false);
 
 // --- API ACTIONS ---
 
@@ -84,14 +86,19 @@ const kembalian = computed(() => {
 // --- METHODS ---
 
 const addToCart = (product) => {
-    if (product.stok <= 0) return alert("Stok habis!");
+    if (product.stok <= 0) {
+        errorMsg.value = "Stok habis!";
+        setTimeout(() => errorMsg.value = "", 3000);
+        return;
+    }
 
     const existingItem = cart.value.find(item => item.id === product.id);
     if (existingItem) {
         if (existingItem.qty < product.stok) {
             existingItem.qty++;
         } else {
-            alert("Stok tidak mencukupi!");
+            errorMsg.value = "Stok tidak mencukupi!";
+            setTimeout(() => errorMsg.value = "", 3000);
         }
     } else {
         cart.value.push({ 
@@ -123,45 +130,75 @@ const setUangPas = () => {
     paymentAmount.value = total.value;
 };
 
+// Show confirmation dialog instead of window.confirm
+const requestCheckout = () => {
+    if (cart.value.length === 0) {
+        errorMsg.value = "Keranjang kosong!";
+        setTimeout(() => errorMsg.value = "", 3000);
+        return;
+    }
+    if (paymentAmount.value < total.value) {
+        errorMsg.value = "Uang pembayaran kurang!";
+        setTimeout(() => errorMsg.value = "", 3000);
+        return;
+    }
+    showConfirmDialog.value = true;
+};
+
+const cancelCheckout = () => {
+    showConfirmDialog.value = false;
+};
+
 const checkout = async () => {
-    if (cart.value.length === 0) return alert("Keranjang kosong!");
-    if (paymentAmount.value < total.value) return alert("Uang pembayaran kurang!");
-
-    if (!confirm("Proses transaksi ini?")) return;
-
+    showConfirmDialog.value = false;
     isLoading.value = true;
     errorMsg.value = "";
+    successMsg.value = "";
 
     try {
         const { data: { user } } = await supabase.auth.getUser();
 
+        // Look up numeric user_id from custom 'users' table (bigint FK)
+        let numericUserId = null;
+        if (user) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', user.email)
+                .single();
+            if (userData) numericUserId = userData.id;
+        }
+
         // 1. Dapatkan antrian / nomor transaksi secara manual
-        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const nowIso = new Date().toISOString();
+        const dateStr = nowIso.slice(0, 10).replace(/-/g, '');
         const randomStr = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
         const no_transaksi = `TRX-${dateStr}-${randomStr}`;
 
         // 2. Insert Penjualan
         const { data: penjualan, error: pError } = await supabase.from('penjualan')
             .insert([{
-                user_id: user ? user.id : 1, // uuid logic handle later if needed
+                user_id: numericUserId,
                 no_transaksi: no_transaksi,
                 total_harga: total.value,
                 bayar: paymentAmount.value,
                 kembali: kembalian.value,
-                method: 'cash'
+                created_at: nowIso,
+                updated_at: nowIso
             }])
             .select()
             .single();
 
         if (pError) throw pError;
 
-        // 3. Insert Details
+        // 3. Insert Details (no subtotal column in schema)
         const detailsData = cart.value.map(item => ({
             penjualan_id: penjualan.id,
             obat_id: item.id,
             qty: item.qty,
             harga: item.price,
-            subtotal: item.price * item.qty
+            created_at: nowIso,
+            updated_at: nowIso
         }));
 
         const { error: pdError } = await supabase.from('penjualan_details').insert(detailsData);
@@ -182,7 +219,8 @@ const checkout = async () => {
             if (sError) console.error("Update stock error:", sError); // non blocking error
         }
         
-        alert(`Transaksi Berhasil!\nKembalian: ${formatRp(kembalian.value)}`);
+        successMsg.value = `Transaksi Berhasil! Kembalian: ${formatRp(kembalian.value)}`;
+        setTimeout(() => successMsg.value = "", 5000);
         
         cart.value = [];
         paymentAmount.value = 0;
@@ -306,7 +344,8 @@ const getIcon = (unit) => {
                 </button>
             </div>
 
-            <div v-if="errorMsg" class="cart-error">{{ errorMsg }}</div>
+            <div v-if="errorMsg" class="cart-error">⚠️ {{ errorMsg }}</div>
+            <div v-if="successMsg" class="cart-success">✅ {{ successMsg }}</div>
 
             <div class="cart-items">
                 <div v-if="cart.length === 0" class="empty-state">
@@ -355,12 +394,23 @@ const getIcon = (unit) => {
                     </span>
                 </div>
                 
-                <button class="btn-checkout" @click="checkout" :disabled="isLoading || cart.length === 0">
+                <button class="btn-checkout" @click="requestCheckout" :disabled="isLoading || cart.length === 0">
                     {{ isLoading ? 'Memproses...' : 'Proses Pembayaran' }}
                 </button>
             </div>
         </div>
 
+        <!-- Confirmation Dialog -->
+        <div v-if="showConfirmDialog" class="confirm-overlay">
+            <div class="confirm-box">
+                <h4>🛒 Konfirmasi Transaksi</h4>
+                <p>Proses transaksi sebesar <strong>{{ formatRp(total) }}</strong>?</p>
+                <div class="confirm-actions">
+                    <button @click="cancelCheckout" class="btn-cancel-dialog">Batal</button>
+                    <button @click="checkout" class="btn-confirm-dialog">Ya, Proses</button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -515,4 +565,34 @@ const getIcon = (unit) => {
 }
 .btn-checkout:hover { background: var(--sidebar-hover); }
 .btn-checkout:disabled { background: var(--border-color); cursor: not-allowed; }
+
+/* Success Message */
+.cart-success { background: var(--success-bg); color: var(--success); padding: 10px; font-size: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid var(--success); font-weight: 600; }
+
+/* Confirmation Dialog */
+.confirm-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.confirm-box {
+    background: var(--bg-card); border-radius: 16px; padding: 30px;
+    max-width: 400px; width: 90%; text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    border: 1px solid var(--border-color);
+}
+.confirm-box h4 { margin: 0 0 10px; font-size: 18px; color: var(--text-main); }
+.confirm-box p { margin: 0 0 20px; color: var(--text-muted); font-size: 14px; }
+.confirm-actions { display: flex; gap: 10px; justify-content: center; }
+.btn-cancel-dialog {
+    padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-muted);
+}
+.btn-confirm-dialog {
+    padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;
+    border: none; background: var(--primary); color: white;
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
+}
+.btn-confirm-dialog:hover { background: var(--primary-dark); }
 </style>

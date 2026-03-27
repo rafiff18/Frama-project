@@ -103,11 +103,7 @@
       
       <!-- Page Content -->
       <div class="flex-1 p-8">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view> 
+        <router-view :key="route.fullPath" />
       </div>
     </main>
   </div>

@@ -69,15 +69,29 @@ const submitPenerimaan = async () => {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError) throw userError;
 
+        // Look up numeric user_id from custom 'users' table (bigint FK)
+        let numericUserId = null;
+        if (user) {
+            const { data: userData } = await supabase
+                .from('users')
+                .select('id')
+                .eq('email', user.email)
+                .single();
+            if (userData) numericUserId = userData.id;
+        }
+
         // 2. Insert Penerimaan Header
+        const nowIso = new Date().toISOString();
         const { data: penerimaanData, error: headerError } = await supabase
             .from('penerimaan')
             .insert([{
                 supplier_id: form.supplier_id,
-                user_id: user ? user.id : 1, // Fallback if user id is UUID but table expects int? Supabase uses UUID by default for users, assume it matches DB schema or set fixed if testing.
+                user_id: numericUserId,
                 no_faktur: form.no_faktur,
-                tgl_penerimaan: new Date(), // DB will handle timestamp if configured, but safe to send JS Date
-                total_harga: grandTotal.value
+                tgl_penerimaan: nowIso.slice(0, 10),
+                total_harga: grandTotal.value,
+                created_at: nowIso,
+                updated_at: nowIso
             }])
             .select()
             .single();
@@ -91,7 +105,9 @@ const submitPenerimaan = async () => {
             penerimaan_id: penerimaanId,
             obat_id: item.obat_id,
             qty: item.jumlah,
-            harga: item.harga_satuan
+            harga: item.harga_satuan,
+            created_at: nowIso,
+            updated_at: nowIso
         }));
 
         // Insert Details in bulk

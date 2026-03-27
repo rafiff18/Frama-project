@@ -99,10 +99,12 @@ const saveSupplier = async () => {
     isLoading.value = true;
     errorMsg.value = "";
     try {
+        const nowIso = new Date().toISOString();
         const payload = {
             nama_suppliers: form.nama_suppliers,
             telepon: form.telepon,
-            alamat: form.alamat
+            alamat: form.alamat,
+            updated_at: nowIso
         };
 
         if (isEditing.value) {
@@ -112,6 +114,7 @@ const saveSupplier = async () => {
                 .eq('id', form.id);
             if (error) throw error;
         } else {
+            payload.created_at = nowIso;
             const { error } = await supabase
                 .from('suppliers')
                 .insert([payload]);
