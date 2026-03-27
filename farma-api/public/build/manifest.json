@@ -1,0 +1,18 @@
+{
+  "resources/images/logo.png": {
+    "file": "assets/logo-BTXI146y.png",
+    "src": "resources/images/logo.png"
+  },
+  "resources/js/frontend/main.js": {
+    "file": "assets/main-D7aw_jLA.js",
+    "name": "main",
+    "src": "resources/js/frontend/main.js",
+    "isEntry": true,
+    "css": [
+      "assets/main-DJNgNlKg.css"
+    ],
+    "assets": [
+      "assets/logo-BTXI146y.png"
+    ]
+  }
+}
